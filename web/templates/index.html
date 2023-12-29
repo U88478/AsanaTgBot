@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token Received</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Asana Access Token</h1>
+        <p>Copy this token and send it to the Telegram bot:</p>
+        <p id="token">{{ encrypted_tokens }}</p>
+        <button onclick="sendToTelegramBot()">Send to bot</button>
+    </div>
+
+    <script>
+        function sendToTelegramBot() {
+            var token = document.getElementById("token").innerText;
+
+            // Копіювання токена
+            navigator.clipboard.writeText(token).then(() => {
+                alert("Token has been copied to clipboard. Please paste it in the chat with the bot.");
+
+                // Відкриття чату з ботом
+                var botUsername = "ProfITsoftAsanaBot";
+                var url = "https://t.me/" + botUsername;
+                window.location.href = url;
+            });
+        }
+    </script>
+</body>
+</html>
