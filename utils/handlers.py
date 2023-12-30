@@ -316,7 +316,7 @@ async def daily_notification():
                     'assignee_gid': task['assignee']['gid'] if task['assignee'] else None,
                 }
                 tasks_dict[task['gid']] = task_info
-            print(tasks_dict)
+            print('\n\n' + tasks_dict + '\n\n')
             for task in tasks_dict:
                 print(task)
                 print(tasks_dict)[task]
