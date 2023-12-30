@@ -325,5 +325,5 @@ async def daily_notification():
 
 
 @router.message(Command("dk"))
-async def dk_command(message: types.Message):
+async def dk_command(message: Message):
     await daily_notification()
