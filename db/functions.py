@@ -1,3 +1,4 @@
+from sqlalchemy import and_
 from .models import Users, DefaultSettings, session
 
 
@@ -60,7 +61,7 @@ def create_default_settings(chat_id: int, workspace_id: str, project_id: str,
     session.commit()
 
 def get_default_settings_for_notification() -> DefaultSettings:
-    settings = session.query(DefaultSettings).filter(DefaultSettings.notification_user_id != None and DefaultSettings.chat_id < 0).all()
+    settings = session.query(DefaultSettings).filter(and_(DefaultSettings.notification_user_id != None, DefaultSettings.chat_id < 0)).all()
     return settings
 
 def get_default_settings(chat_id: int) -> DefaultSettings:
