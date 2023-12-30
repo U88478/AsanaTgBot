@@ -316,10 +316,10 @@ async def daily_notification():
                     'assignee_gid': task['assignee']['gid'] if task['assignee'] else None,
                 }
                 tasks_dict[task['gid']] = task_info
-            user_tasks_dict = {}
+            print(tasks_dict)
             for task in tasks_dict:
                 print(task)
-                print(tasks_dict)
+                print(tasks_dict)[task]
         except Exception as e:
             logging.error(f"Error fetching tasks for project {project_id}: {e}")
 
