@@ -319,6 +319,7 @@ async def daily_notification():
             user_tasks_dict = {}
             for task in tasks_dict:
                 print(task)
+                print(tasks_dict)
         except Exception as e:
             logging.error(f"Error fetching tasks for project {project_id}: {e}")
 
