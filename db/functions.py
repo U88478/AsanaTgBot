@@ -33,7 +33,7 @@ def delete_user(tg_id: int):
 
 
 def create_default_settings(chat_id: int, workspace_id: str, project_id: str,
-                            project_name: str, section_id: str, section_name: str):
+                            project_name: str, section_id: str, section_name: str, user_id: int):
     settings = session.query(DefaultSettings).filter(DefaultSettings.chat_id == chat_id).first()
 
     if settings:
@@ -43,6 +43,7 @@ def create_default_settings(chat_id: int, workspace_id: str, project_id: str,
         settings.project_name = project_name
         settings.section_id = section_id
         settings.section_name = section_name
+        settings.notification_user_id = user_id
     else:
         # Якщо запис не існує, створюємо новий запис
         settings = DefaultSettings(
@@ -51,12 +52,16 @@ def create_default_settings(chat_id: int, workspace_id: str, project_id: str,
             project_id=project_id,
             project_name=project_name,
             section_id=section_id,
-            section_name=section_name
+            section_name=section_name,
+            notification_user_id=user_id
         )
 
     session.add(settings)
     session.commit()
 
+def get_default_settings_for_notification() -> DefaultSettings:
+    settings = session.query(DefaultSettings).filter(DefaultSettings.notification_user_id != None and DefaultSettings.chat_id < 0).all()
+    return settings
 
 def get_default_settings(chat_id: int) -> DefaultSettings:
     settings = session.query(DefaultSettings).filter(DefaultSettings.chat_id == chat_id).first()

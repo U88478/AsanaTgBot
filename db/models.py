@@ -26,6 +26,7 @@ class DefaultSettings(Base):
     project_name = Column(String, nullable=False)
     section_id = Column(String, nullable=False)
     section_name = Column(String, nullable=False)
+    notification_user_id = Column(BigInteger, nullable=True)
 
 
 # Підключення до бази даних
