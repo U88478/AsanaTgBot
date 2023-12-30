@@ -321,3 +321,9 @@ async def daily_notification():
                 print(task)
         except Exception as e:
             logging.error(f"Error fetching tasks for project {project_id}: {e}")
+
+
+
+@router.message(Command("dk"))
+async def dk_command(message: types.Message):
+    await daily_notification()
