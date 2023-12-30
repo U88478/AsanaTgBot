@@ -1,5 +1,6 @@
 from asyncio import tasks
 import datetime
+# import pytz
 import logging
 import re
 from aiogram import Router
@@ -119,7 +120,7 @@ async def save_settings(message: Message, state: FSMContext) -> None:
                     f'Проект: {settings["project_name"]}; {settings["project_id"]}\n' \
                     f'Дошка: {section_name}; {section_id}\n'
     
-    create_default_settings(message.chat.id, settings["workspace_id"], settings["project_id"], settings["project_name"], section_id, section_name)
+    create_default_settings(message.chat.id, settings["workspace_id"], settings["project_id"], settings["project_name"], section_id, section_name, message.from_user.id)
     await message.answer(settings_text, reply_markup=ReplyKeyboardRemove())
     await state.clear()
 
@@ -281,8 +282,42 @@ async def handle_task_selection(message: Message, state: FSMContext):
 
     try:
         tasks_api_instance.update_task(body, task_gid, opts)
-        await message.answer(f"Звіт здано")
+        await message.answer(f"Звіт здано", reply_markup=ReplyKeyboardRemove())
         await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
         await state.clear()
     except Exception as e:
-        await message.answer(f"Помилка: {e}")
+        await message.answer(f"Помилка: {e}", reply_markup=ReplyKeyboardRemove())
+
+
+async def daily_notification():
+    chats_to_notify = get_default_settings_for_notification()
+
+    for chat in chats_to_notify:
+        project_id = chat.project_id
+        notification_user_id = chat.notification_user_id
+
+        asana_client = get_asana_client(notification_user_id)
+        tasks_api_instance = asana.TasksApi(asana_client)
+
+        try:
+            opts = {
+            'completed_since': "now",
+            'opt_fields' : "assignee" 
+            }
+            tasks = tasks_api_instance.get_tasks_for_project(project_id, opts)
+            tasks_dict = {}
+            opts = {
+                'opt_fields': "name, assignee"
+            }
+            for task in tasks:
+                task = tasks_api_instance.get_task(task['gid'], opts)
+                task_info = {
+                    'name': task['name'],
+                    'assignee_gid': task['assignee']['gid'] if task['assignee'] else None,
+                }
+                tasks_dict[task['gid']] = task_info
+            user_tasks_dict = {}
+            for task in tasks_dict:
+                print(task)
+        except Exception as e:
+            logging.error(f"Error fetching tasks for project {project_id}: {e}")
