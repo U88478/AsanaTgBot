@@ -315,7 +315,7 @@ async def daily_notification():
                     due_date = datetime.datetime.strptime(task_detail['due_on'], '%Y-%m-%d').date()
                     if due_date == today and 'assignee' in task_detail and task_detail['assignee']:
                         assignee_gid = task_detail['assignee']['gid']
-                        telegram_id = get_telegram_id_by_asana_id(assignee_gid)
+                        telegram_id = get_telegram_id_by_asana_id(asana_id=str(assignee_gid))
                         if telegram_id:
                             if telegram_id not in user_tasks:
                                 user_tasks[telegram_id] = []
