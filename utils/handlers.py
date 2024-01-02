@@ -8,7 +8,7 @@ from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKey
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from utils.asana_functions import *
-from db.functions import get_telegram_id_by_asana_id
+from db.functions import session
 from bot.bot_instance import bot
 from utils.config import *
 from utils.helpers import *
@@ -315,7 +315,7 @@ async def daily_notification():
                     due_date = datetime.datetime.strptime(task_detail['due_on'], '%Y-%m-%d').date()
                     if due_date == today and 'assignee' in task_detail and task_detail['assignee']:
                         assignee_gid = task_detail['assignee']['gid']
-                        telegram_id = get_telegram_id_by_asana_id(asana_id=str(assignee_gid))
+                        telegram_id = session.query(Users).filter(Users.asana_id == assignee_gid).first().tg_id
                         if telegram_id:
                             if telegram_id not in user_tasks:
                                 user_tasks[telegram_id] = []
