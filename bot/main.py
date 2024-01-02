@@ -4,12 +4,13 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.config import *
+from bot  import init_bot, bot
 from utils.handlers import router
-from aiogram import Bot, Dispatcher
+from aiogram import Dispatcher
 
 
 async def main():
-    bot = Bot(token, parse_mode='HTML')
+    init_bot(token)
     dp = Dispatcher()
     dp.include_router(router)
     await dp.start_polling(bot)

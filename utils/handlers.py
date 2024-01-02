@@ -9,6 +9,7 @@ from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from utils.asana_functions import *
 from utils.config import *
+from bot.bot_instance import bot
 from utils.helpers import *
 from utils.states.authorization import Authorization
 from utils.states.default_settings import DefaultSettings
@@ -291,6 +292,7 @@ async def handle_task_selection(message: Message, state: FSMContext):
 
 async def daily_notification():
     chats_to_notify = get_default_settings_for_notification()
+    today = datetime.date.today()
 
     for chat in chats_to_notify:
         project_id = chat.project_id
@@ -301,27 +303,27 @@ async def daily_notification():
 
         try:
             opts = {
-            'completed_since': "now",
-            'opt_fields' : "assignee" 
+                'completed_since': "now",
+                'opt_fields': "name,assignee,due_on"
             }
             tasks = tasks_api_instance.get_tasks_for_project(project_id, opts)
-            tasks_dict = {}
-            opts = {
-                'opt_fields': "name, assignee"
-            }
+            user_tasks = {}
             for task in tasks:
-                task = tasks_api_instance.get_task(task['gid'], opts)
-                task_info = {
-                    'name': task['name'],
-                    'assignee_gid': task['assignee']['gid'] if task['assignee'] else None,
-                }
-                tasks_dict[task['gid']] = task_info
-            print('\n\n')
-            print( tasks_dict)
-            print('\n\n')
-            for task in tasks_dict:
-                print(task)
-                print(tasks_dict)[task]
+                task_detail = tasks_api_instance.get_task(task['gid'], opts)
+                if 'due_on' in task_detail and task_detail['due_on']:
+                    due_date = datetime.datetime.strptime(task_detail['due_on'], '%Y-%m-%d').date()
+                    if due_date == today and 'assignee' in task_detail and task_detail['assignee']:
+                        assignee_gid = task_detail['assignee']['gid']
+                        telegram_id = get_telegram_id_by_asana_id(assignee_gid)
+                        if telegram_id:
+                            if telegram_id not in user_tasks:
+                                user_tasks[telegram_id] = []
+                            user_tasks[telegram_id].append(task_detail['name'])
+
+            for telegram_id, tasks in user_tasks.items():
+                message = "У вас є завдання на сьогодні:\n" + "\n".join([f"🔸 {task}" for task in tasks])
+                await bot.send_message(telegram_id, message)
+
         except Exception as e:
             logging.error(f"Error fetching tasks for project {project_id}: {e}")
 
@@ -330,3 +332,4 @@ async def daily_notification():
 @router.message(Command("dk"))
 async def dk_command(message: Message):
     await daily_notification()
+    await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
