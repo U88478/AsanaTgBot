@@ -298,19 +298,6 @@ async def daily_notification():
     chats_to_notify = get_default_settings_for_notification()
     today = datetime.date.today()
 
-    user = get_user(message.from_user.id)
-    asana_client = get_asana_client(message.from_user.id)
-    users_api_instance = asana.UsersApi(asana_client)
-    opts = {
-
-    }
-    try:
-        users_api_instance.get_user("me", opts)
-    except ApiException:
-        new_access_token, new_refresh_token = refresh_access_token(user.asana_refresh_token)
-        create_user(message.from_user.id, message.from_user.first_name, 
-                    message.from_user.username, new_access_token, 
-                    new_refresh_token, user.asana_id)
 
     for chat in chats_to_notify:
         project_id = chat.project_id
@@ -318,6 +305,19 @@ async def daily_notification():
 
         asana_client = get_asana_client(notification_user_id)
         tasks_api_instance = asana.TasksApi(asana_client)
+
+        user = get_user(notification_user_id)
+        users_api_instance = asana.UsersApi(asana_client)
+        opts = {
+
+        }
+        try:
+            users_api_instance.get_user("me", opts)
+        except ApiException:
+            new_access_token, new_refresh_token = refresh_access_token(user.asana_refresh_token)
+            create_user(user.tg_id, user.tg_first_name, 
+                        user.tg_username, new_access_token, 
+                        new_refresh_token, user.asana_id)
 
         try:
             opts = {
