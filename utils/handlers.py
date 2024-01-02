@@ -119,13 +119,11 @@ async def save_settings(message: Message, state: FSMContext) -> None:
 
     # send settings
     settings = await state.get_data()
-    settings_text = f'Ваші налаштування:\n\n' \
-                    f'Workspace(?): {settings["workspace_name"]}; {settings["workspace_id"]}\n' \
-                    f'Проект: {settings["project_name"]}; {settings["project_id"]}\n' \
-                    f'Дошка: {section_name}; {section_id}\n'
+    
     
     create_default_settings(message.chat.id, settings["workspace_id"], settings["project_id"], settings["project_name"], section_id, section_name, message.from_user.id)
-    await message.answer(settings_text, reply_markup=ReplyKeyboardRemove())
+    await message.answer("Налаштування успішно змінено!", reply_markup=ReplyKeyboardRemove())
+    await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
     await state.clear()
 
 @router.message(Command("asana"))
