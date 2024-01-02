@@ -4,7 +4,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.config import *
-from bot  import init_bot, bot
+from bot import init_bot, bot
 from utils.handlers import router
 from aiogram import Dispatcher
 
