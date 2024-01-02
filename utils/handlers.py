@@ -329,7 +329,7 @@ async def daily_notification():
 
 
 
-@router.message(Command("dk"))
-async def dk_command(message: Message):
-    await daily_notification()
-    await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
+# @router.message(Command("dk"))
+# async def dk_command(message: Message):
+#     await daily_notification()
+#     await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
