@@ -8,6 +8,7 @@ from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKey
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from utils.asana_functions import *
+from db.functions import *
 from bot.bot_instance import bot
 from utils.config import *
 from utils.helpers import *
