@@ -22,7 +22,7 @@ async def main():
     kiev = pytz.timezone('Europe/Kiev')
 
     # Додавання завдання
-    scheduler.add_job(daily_notification, 'cron', hour=9, minute=0, timezone=kiev)
+    scheduler.add_job(daily_notification, 'cron', hour=17, minute=16, timezone=kiev)
 
     # Запуск планувальника
     scheduler.start()

@@ -6,6 +6,7 @@ from aiogram import Router
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
+from asana.rest import ApiException
 from utils.asana_functions import *
 from db.functions import session
 from bot.bot_instance import bot
@@ -298,14 +299,18 @@ async def daily_notification():
     today = datetime.date.today()
 
     user = get_user(message.from_user.id)
-    if user and refresh_access_token(user.asana_refresh_token):
-        try:
-            new_access_token, new_refresh_token = refresh_access_token(user.asana_refresh_token)
-            create_user(message.from_user.id, message.from_user.first_name, 
-                        message.from_user.username, new_access_token, 
-                        new_refresh_token, user.asana_id)
-        except Exception as e:
-            await message.answer(f"Помилка оновлення токена: {e}")
+    asana_client = get_asana_client(message.from_user.id)
+    users_api_instance = asana.UsersApi(asana_client)
+    opts = {
+
+    }
+    try:
+        users_api_instance.get_user("me", opts)
+    except ApiException:
+        new_access_token, new_refresh_token = refresh_access_token(user.asana_refresh_token)
+        create_user(message.from_user.id, message.from_user.first_name, 
+                    message.from_user.username, new_access_token, 
+                    new_refresh_token, user.asana_id)
 
     for chat in chats_to_notify:
         project_id = chat.project_id
