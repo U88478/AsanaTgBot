@@ -26,7 +26,6 @@ def get_asana_id_by_username(username: str) -> str:
     user = session.query(Users).filter(Users.tg_username == username).first()
     return user.asana_id
 
-
 def delete_user(tg_id: int):
     session.query(Users).filter(Users.tg_id == tg_id).delete()
     session.commit()

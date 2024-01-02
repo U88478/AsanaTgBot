@@ -11,6 +11,7 @@ from db.functions import session
 from bot.bot_instance import bot
 from utils.config import *
 from utils.helpers import *
+from utils.refresh_token_wrap import refresh_token
 from utils.states.authorization import Authorization
 from utils.states.default_settings import DefaultSettings
 from utils.states.report_task import ReportTask
@@ -39,6 +40,7 @@ async def process_token(message: Message, state: FSMContext) -> None:
         await message.reply("Це не схоже на токен, спробуйте ще раз.")
 
 @router.message(Command("link"))
+@refresh_token
 async def process_link_command(message: Message, state: FSMContext) -> None:
     asana_client = get_asana_client(message.from_user.id)
     workspaces = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
@@ -126,6 +128,7 @@ async def save_settings(message: Message, state: FSMContext) -> None:
     await state.clear()
 
 @router.message(Command("asana"))
+@refresh_token
 async def create_asana_task(message: Message, state: FSMContext):
     text = message.text
     command = text.split("@")[0][6:].strip()
@@ -293,6 +296,16 @@ async def handle_task_selection(message: Message, state: FSMContext):
 async def daily_notification():
     chats_to_notify = get_default_settings_for_notification()
     today = datetime.date.today()
+
+    user = get_user(message.from_user.id)
+    if user and refresh_access_token(user.asana_refresh_token):
+        try:
+            new_access_token, new_refresh_token = refresh_access_token(user.asana_refresh_token)
+            create_user(message.from_user.id, message.from_user.first_name, 
+                        message.from_user.username, new_access_token, 
+                        new_refresh_token, user.asana_id)
+        except Exception as e:
+            await message.answer(f"Помилка оновлення токена: {e}")
 
     for chat in chats_to_notify:
         project_id = chat.project_id
