@@ -73,7 +73,7 @@ async def revoke_asana_token(message: Message):
         await message.answer("Ваш токен успішно видалено.")
         await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
     else:
-        print("Failed to revoke token. Status code:", response.status_code)
+        print("Failed to revoke token. Status code:", response.status_code, response.reason)
 
 
 @router.message(Command("link"))
