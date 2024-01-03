@@ -300,7 +300,8 @@ async def daily_notification():
     for chat in chats_to_notify:
         project_id = chat.project_id
         notification_user_id = chat.notification_user_id
-        all_user_ids = set(get_all_user_ids())
+        all_users = session.query(Users).all()
+        all_user_ids = set([user.tg_id for user in all_users])
 
         asana_client = get_asana_client(notification_user_id)
         tasks_api_instance = asana.TasksApi(asana_client)
