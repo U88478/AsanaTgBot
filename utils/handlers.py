@@ -6,6 +6,7 @@ from aiogram import Router
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
+from aiogram.enums.chat_type import ChatType
 from asana.rest import ApiException
 from utils.asana_functions import *
 from db.functions import session
@@ -20,7 +21,11 @@ from utils.states.report_task import ReportTask
 router = Router()
 
 
-@router.message(CommandStart())
+def is_private(message: Message):
+    return message.chat.type == ChatType.PRIVATE
+
+
+@router.message(CommandStart(), is_private)
 async def start(message: Message, state: FSMContext) -> None:
     kkeyboard = ReplyKeyboardMarkup(
         keyboard=[
@@ -54,7 +59,7 @@ async def process_token(message: Message, state: FSMContext) -> None:
         await message.reply("Це не схоже на токен, спробуйте ще раз.")
 
 
-@router.message(Command("stop"))
+@router.message(Command("stop"), is_private)
 @refresh_token
 async def revoke_asana_token(message: Message):
     user = get_user(message.from_user.id)
