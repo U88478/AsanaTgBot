@@ -300,6 +300,7 @@ async def daily_notification():
     for chat in chats_to_notify:
         project_id = chat.project_id
         notification_user_id = chat.notification_user_id
+        all_user_ids = set(get_all_user_ids())
 
         asana_client = get_asana_client(notification_user_id)
         tasks_api_instance = asana.TasksApi(asana_client)
@@ -336,9 +337,16 @@ async def daily_notification():
                                 user_tasks[telegram_id] = []
                             user_tasks[telegram_id].append(task_detail['name'])
 
+            # Відправка повідомлень користувачам з задачами
             for telegram_id, tasks in user_tasks.items():
                 message = "У вас є завдання на сьогодні:\n" + "\n".join([f"🔸 {task}" for task in tasks])
                 await bot.send_message(telegram_id, message)
+                # Видаляємо ID зі списку
+                all_user_ids.discard(telegram_id)
+            
+            # Відправка повідомлень користувачам без задач
+            for user_id in all_user_ids:
+                await bot.send_message(user_id, "На сьогодні задач немає.")
 
         except Exception as e:
             logging.error(f"Error fetching tasks for project {project_id}: {e}")
