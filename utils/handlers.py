@@ -22,23 +22,50 @@ router = Router()
 
 @router.message(CommandStart())
 async def start(message: Message, state: FSMContext) -> None:
-    """
-    Start command
-    """
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add(KeyboardButton("Вийти"))
+
     await state.set_state(Authorization.token)
-    await message.reply(f"Для авторизації в Asana, будь ласка, перейдіть за наступним посиланням: \n\n{auth_url}")
+    await message.reply(f"Для авторизації в Asana, будь ласка, перейдіть за наступним посиланням: \n\n{auth_url}", reply_markup=keyboard)
+
 
 @router.message(Authorization.token)
 async def process_token(message: Message, state: FSMContext) -> None:
-    if is_valid_token_format(message.text):
+    if message.text == "Вийти":
+        await state.clear()
+        await message.answer("Авторизація скасована.", reply_markup=ReplyKeyboardRemove())
+    elif is_valid_token_format(message.text):
         token, refresh_token = decrypt_tokens(key, message.text)
         asana_id = get_asana_id(token)
         create_user(message.from_user.id, message.from_user.first_name, message.from_user.username, token,
                     refresh_token, asana_id)
-        await message.answer(f"Ви успішно зареєструвалися!")
+        await message.answer(f"Ви успішно зареєструвалися!", reply_markup=ReplyKeyboardRemove())
         await state.clear()
     else:
         await message.reply("Це не схоже на токен, спробуйте ще раз.")
+
+
+@router.message(Command("stop"))
+@refresh_token
+async def revoke_asana_token(message: Message):
+    user = get_user(message.from_user.id)
+    url = "https://app.asana.com/-/oauth_revoke"
+    payload = {
+        'client_id': asana_client_id,
+        'client_secret': asana_client_secret,
+        'token': user.asana_token
+    }
+
+    response = requests.post(url, data=payload)
+
+    if response.status_code == 200:
+        print("Token successfully revoked.")
+        create_user(message.from_user.id, message.from_user.first_name, message.from_user.username, None, None, user.asana_id)
+        await message.answer("Ваш токен успішно видалено.")
+        await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
+    else:
+        print("Failed to revoke token. Status code:", response.status_code)
+
 
 @router.message(Command("link"))
 @refresh_token

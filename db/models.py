@@ -12,8 +12,8 @@ class Users(Base):
     tg_id = Column(BigInteger, primary_key=True)
     tg_first_name = Column(String, nullable=False)
     tg_username = Column(String, nullable=True)
-    asana_token = Column(String, nullable=False)
-    asana_refresh_token = Column(String, nullable=False)
+    asana_token = Column(String, nullable=True)
+    asana_refresh_token = Column(String, nullable=True)
     asana_id = Column(String, nullable=False)
 
 

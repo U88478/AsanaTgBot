@@ -22,6 +22,11 @@ def get_user(tg_id: int) -> Users:
     user = session.query(Users).filter(Users.tg_id == tg_id).first()
     return user
 
+def get_all_user_ids():
+    users = session.query(Users).all()
+    user_ids = [user.tg_id for user in users]
+    return user_ids
+
 def get_asana_id_by_username(username: str) -> str:
     user = session.query(Users).filter(Users.tg_username == username).first()
     return user.asana_id
