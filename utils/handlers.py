@@ -66,6 +66,8 @@ async def revoke_asana_token(message: Message):
     user = get_user(message.from_user.id)
     if not user or not user.asana_token or not user.asana_refresh_token:
         await message.reply("Ви і без цього не були зареєстровані.")
+        await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
+        return
     url = "https://app.asana.com/-/oauth_revoke"
     payload = {
         'client_id': asana_client_id,
