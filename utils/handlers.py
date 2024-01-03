@@ -22,16 +22,10 @@ router = Router()
 
 @router.message(CommandStart())
 async def start(message: Message, state: FSMContext) -> None:
-    # keyboard = ReplyKeyboardMarkup(
-    #     keyboard=[KeyboardButton("Вийти")],
-    #     resize_keyboard=True,
-    #     one_time_keyboard=True
-    # )
-
     kkeyboard = ReplyKeyboardMarkup(
         keyboard=[
             [
-                KeyboardButton(text="k")
+                KeyboardButton(text="Вийти")
             ]
             ],
         resize_keyboard=True,
