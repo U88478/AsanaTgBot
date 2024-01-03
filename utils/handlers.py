@@ -62,7 +62,6 @@ async def process_token(message: Message, state: FSMContext) -> None:
 
 
 @router.message(Command("stop"), is_private)
-@refresh_token
 async def revoke_asana_token(message: Message):
     user = get_user(message.from_user.id)
     if not user or not user.asana_token or not user.asana_refresh_token:
