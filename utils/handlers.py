@@ -62,7 +62,7 @@ async def revoke_asana_token(message: Message):
     payload = {
         'client_id': asana_client_id,
         'client_secret': asana_client_secret,
-        'token': user.asana_token
+        'token': user.asana_refresh_tokens
     }
 
     response = requests.post(url, data=payload)
@@ -73,7 +73,7 @@ async def revoke_asana_token(message: Message):
         await message.answer("Ваш токен успішно видалено.")
         await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
     else:
-        print("Failed to revoke token. Status code:", response.text)
+        print("Failed to revoke token:", response.text)
 
 
 @router.message(Command("link"))
