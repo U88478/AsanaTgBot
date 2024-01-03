@@ -23,9 +23,11 @@ router = Router()
 @router.message(CommandStart())
 async def start(message: Message, state: FSMContext) -> None:
     keyboard = ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton("Вийти")]],
-        resize_keyboard=True
-    )
+    keyboard=[
+        [KeyboardButton("Вийти")]
+    ],
+    resize_keyboard=True
+)
 
     await state.set_state(Authorization.token)
     await message.reply(f"Для авторизації в Asana, будь ласка, перейдіть за наступним посиланням: \n\n{auth_url}", reply_markup=keyboard)
