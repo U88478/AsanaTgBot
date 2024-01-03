@@ -9,6 +9,13 @@ def refresh_token(func):
     @wraps(func)
     async def wrapper(message, *args, **kwargs):
         user = get_user(message.from_user.id)
+
+        if not user or not user.asana_token or not user.asana_refresh_token:
+            await message.reply("Будь ласка, зареєструйтеся за допомогою команди /start у приватних повідомленнях з ботом.")
+            return
+
+        asana_client = get_asana_client(message.from_user.id)
+        users_api_instance = asana.UsersApi(asana_client)
         asana_client = get_asana_client(message.from_user.id)
         users_api_instance = asana.UsersApi(asana_client)
         opts = {

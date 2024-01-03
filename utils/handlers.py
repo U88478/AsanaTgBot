@@ -22,6 +22,8 @@ router = Router()
 
 
 def is_private(message: Message):
+    if message.chat.type != ChatType.PRIVATE:
+        message.answer("Ця команда доступна лише в приватних повідомленнях")
     return message.chat.type == ChatType.PRIVATE
 
 
@@ -63,6 +65,8 @@ async def process_token(message: Message, state: FSMContext) -> None:
 @refresh_token
 async def revoke_asana_token(message: Message):
     user = get_user(message.from_user.id)
+    if not user or not user.asana_token or not user.asana_refresh_token:
+        await message.reply("Ви і без цього не були зареєстровані.")
     url = "https://app.asana.com/-/oauth_revoke"
     payload = {
         'client_id': asana_client_id,
