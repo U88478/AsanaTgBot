@@ -62,7 +62,7 @@ async def revoke_asana_token(message: Message):
     payload = {
         'client_id': asana_client_id,
         'client_secret': asana_client_secret,
-        'token': user.asana_refresh_tokens
+        'token': user.asana_refresh_token
     }
 
     response = requests.post(url, data=payload)
