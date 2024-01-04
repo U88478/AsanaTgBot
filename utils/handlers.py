@@ -451,5 +451,6 @@ async def dk_command(message: Message):
     user = get_user(message.from_user.id)
     projects = get_asana_projects(user.asana_token)
     for project in projects:
-        await message.answer(project['name'], project['gid'])
+        project_info = f"{project['name']} (ID: {project['gid']})"
+        await message.answer(project_info)
     await message.answer("//")
