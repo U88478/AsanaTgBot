@@ -29,7 +29,7 @@ def is_private(message: Message):
 
 @router.message(CommandStart(), is_private)
 async def start(message: Message, state: FSMContext) -> None:
-    kkeyboard = ReplyKeyboardMarkup(
+    reply_keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [
                 KeyboardButton(text="Вийти")
@@ -39,10 +39,25 @@ async def start(message: Message, state: FSMContext) -> None:
         one_time_keyboard=True
     )
 
+    inline_keyboard = InlineKeyboardMarkup(
+        keyboard=[
+            [
+                InlineKeyboardButton(text="Підключитися", url=auth_url)
+            ]
+            ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+
     
 
     await state.set_state(Authorization.token)
-    await message.reply(f"Для авторизації в Asana, будь ласка, перейдіть за наступним посиланням: \n\n{auth_url}", reply_markup=kkeyboard)
+    await message.reply(f"Вітаю вас! Я - ProfITsoft Asana Bot, я забезпечую швидкий доступ до ваших Asana задач,
+                         та допомогаю ефективно керувати персональними задачами та задачами команди,
+                         не залишаючи вашого улюбленого месенджера", reply_markup=reply_keyboard)
+    
+    await message.reply(f"Ви поки що не авторизовані в Асані \n Час підключатися! Перейдіть на сторінку авторизації Asana 
+                        за наданим посиланням та скопіюйте отриманий там токен в чат.", reply_markup=inline_keyboard)
 
 
 @router.message(Authorization.token)
@@ -53,12 +68,19 @@ async def process_token(message: Message, state: FSMContext) -> None:
     elif is_valid_token_format(message.text):
         token, refresh_token = decrypt_tokens(key, message.text)
         asana_id = get_asana_id(token)
+        user = get_user(message.from_user.id)
+        if not user:
+            new_user = True
         create_user(message.from_user.id, message.from_user.first_name, message.from_user.username, token,
                     refresh_token, asana_id)
-        await message.answer(f"Ви успішно зареєструвалися!", reply_markup=ReplyKeyboardRemove())
+        await message.answer(f"Вітаю. Ви успішно авторизувалися!", reply_markup=ReplyKeyboardRemove())
+        if new_user:
+            await message.answer(f'Тепер ви можете створювати та закривати задачі в розділі
+                                  "Мої задачі" прямо з цього чату або додати бота у чат команди 
+                                 та керувати задачами спільного проекту.')
         await state.clear()
     else:
-        await message.reply("Це не схоже на токен, спробуйте ще раз.")
+        await message.reply(f"Трясця! Щось пішло не так. \nЦе не схоже на токен, спробуйте ще раз")
 
 
 @router.message(Command("stop"), is_private)
