@@ -56,7 +56,7 @@ async def start(message: Message, state: FSMContext) -> None:
                         reply_markup=reply_keyboard
                     )
     
-    await message.reply("Ви поки що не авторизовані в Асані \n Час підключатися! Перейдіть на сторінку авторизації Asana "
+    await message.reply("Ви поки що не авторизовані в Асані. \n\nЧас підключатися! Перейдіть на сторінку авторизації Asana "
                         "за наданим посиланням та скопіюйте отриманий там токен в чат.", reply_markup=inline_kb)
 
 
@@ -78,10 +78,10 @@ async def process_token(message: Message, state: FSMContext) -> None:
         if new_user:
             await message.answer('Тепер ви можете створювати та закривати задачі в розділі'
                                 '"Мої задачі" прямо з цього чату або додати бота у чат команди'
-                                'та керувати задачами спільного проекту.')
+                                ' та керувати задачами спільного проекту.')
         await state.clear()
     else:
-        await message.reply("Трясця! Щось пішло не так. \nЦе не схоже на токен, спробуйте ще раз")
+        await message.reply("Трясця! Щось пішло не так.\n\nЦе не схоже на токен, спробуйте ще раз")
 
 
 @router.message(Command("stop"), is_private)
