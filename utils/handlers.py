@@ -433,22 +433,20 @@ async def daily_notification():
             logging.error(f"Error fetching tasks for project {project_id}: {e}")
 
 
-def get_asana_projects(access_token):
-    url = "https://app.asana.com/api/1.0/workspaces"
+def get_user_task_list(user_gid, access_token):
+    url = f"https://app.asana.com/api/1.0/users/{user_gid}/user_task_list"
     headers = {
-        "Authorization": "Bearer " + access_token
+        "Authorization": f"Bearer {access_token}"
     }
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
-        return response.json()['data']
+        return response.json()
     else:
-        raise Exception("Error fetching projects: " + response.text)
+        raise Exception(f"Error fetching user task list: {response.text}")
     
 
 @router.message(Command("dk"))
 async def dk_command(message: Message):
     user = get_user(message.from_user.id)
-    projects = get_asana_projects(user.asana_token)
-    for project in projects:
-        project_info = f"{project['name']} (ID: {project['gid']})"
-        await message.answer(project_info)
+    user_task_list = get_user_task_list(user.asana_id, user.asana_token)
+    await message.answer(user_task_list)
