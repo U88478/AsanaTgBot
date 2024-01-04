@@ -259,8 +259,8 @@ async def create_asana_task(message: Message, state: FSMContext):
             await message.answer("На сьогодні задач немає.")
             return
 
-        message = "Завдання на сьогодні:\n" + "\n".join([f"🔸 {task['name']}" for task in user_tasks_dict.values()])
-        await message.answer(message)
+        answer_text = "Завдання на сьогодні:\n" + "\n".join([f"🔸 {task['name']}" for task in user_tasks_dict.values()])
+        await message.answer(answer_text)
 
 
 
