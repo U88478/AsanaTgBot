@@ -34,7 +34,7 @@ def get_asana_id_by_username(username: str) -> str:
 def delete_user(tg_id: int):
     session.query(Users).filter(Users.tg_id == tg_id).delete()
     session.commit()
-    return 'y'
+    return True
 
 
 def create_default_settings(chat_id: int, workspace_id: str, project_id: str,

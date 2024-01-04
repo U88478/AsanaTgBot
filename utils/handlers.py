@@ -109,6 +109,18 @@ async def revoke_asana_token(message: Message):
         print("Failed to revoke token:", response.text)
 
 
+@router.message(Command("delete"), is_private)
+async def delete_command(message: Message):
+    user = get_user(message.from_user.id)
+    delete_result = False
+    if user:
+        delete_result = delete_user(message.from_user.id)
+    if delete_result or not user:
+        await message.reply("Вас було успішно видалено з бази даних.")
+        await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
+       
+
+
 @router.message(Command("link"))
 @refresh_token
 async def process_link_command(message: Message, state: FSMContext) -> None:
