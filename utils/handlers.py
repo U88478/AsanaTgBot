@@ -432,8 +432,21 @@ async def daily_notification():
             logging.error(f"Error fetching tasks for project {project_id}: {e}")
 
 
+def get_asana_projects(access_token):
+    url = "https://app.asana.com/api/1.0/projects"
+    headers = {
+        "Authorization": "Bearer " + access_token
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()['data']
+    else:
+        raise Exception("Error fetching projects: " + response.text)
+    
 
-# @router.message(Command("dk"))
-# async def dk_command(message: Message):
-#     await daily_notification()
-#     await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
+@router.message(Command("dk"))
+async def dk_command(message: Message):
+    user = get_user(message.from_user.id)
+    projects = get_asana_projects(user.asana_token)
+    for project in projects:
+        print(project['name'], project['id'])
