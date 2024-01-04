@@ -44,9 +44,7 @@ async def start(message: Message, state: FSMContext) -> None:
             [
                 InlineKeyboardButton(text="Підключитися", url=auth_url)
             ]
-            ],
-        resize_keyboard=True,
-        one_time_keyboard=True
+            ]
     )
 
     
