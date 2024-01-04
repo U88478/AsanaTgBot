@@ -39,8 +39,8 @@ async def start(message: Message, state: FSMContext) -> None:
         one_time_keyboard=True
     )
 
-    inline_keyboard = InlineKeyboardMarkup(
-        keyboard=[
+    inline_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
             [
                 InlineKeyboardButton(text="Підключитися", url=auth_url)
             ]
@@ -57,7 +57,7 @@ async def start(message: Message, state: FSMContext) -> None:
                     )
     
     await message.reply("Ви поки що не авторизовані в Асані \n Час підключатися! Перейдіть на сторінку авторизації Asana "
-                        "за наданим посиланням та скопіюйте отриманий там токен в чат.", reply_markup=inline_keyboard)
+                        "за наданим посиланням та скопіюйте отриманий там токен в чат.", reply_markup=inline_kb)
 
 
 @router.message(Authorization.token)
