@@ -434,7 +434,7 @@ async def daily_notification():
 
 
 def get_asana_projects(access_token):
-    url = "https://app.asana.com/api/1.0/projects"
+    url = "https://app.asana.com/api/1.0/workspaces"
     headers = {
         "Authorization": "Bearer " + access_token
     }
@@ -447,10 +447,8 @@ def get_asana_projects(access_token):
 
 @router.message(Command("dk"))
 async def dk_command(message: Message):
-    await message.answer("/")
     user = get_user(message.from_user.id)
     projects = get_asana_projects(user.asana_token)
     for project in projects:
         project_info = f"{project['name']} (ID: {project['gid']})"
         await message.answer(project_info)
-    await message.answer("//")
