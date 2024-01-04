@@ -252,6 +252,17 @@ async def create_asana_task(message: Message, state: FSMContext):
         else:
             await message.answer("Наразі немає доступних задач.")
 
+    if command == "duetoday":
+        user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
+
+        if not user_tasks_dict:
+            await message.answer("На сьогодні задач немає.")
+            return
+
+        message = "Завдання на сьогодні:\n" + "\n".join([f"🔸 {task['name']}" for task in user_tasks_dict.values()])
+        await message.answer(message)
+
+
 
 # Функція для отримання задач на сьогодні
 def get_todays_tasks_for_user_in_workspace(user_id, project_id):
