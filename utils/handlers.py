@@ -447,7 +447,9 @@ def get_asana_projects(access_token):
 
 @router.message(Command("dk"))
 async def dk_command(message: Message):
+    await message.answer("/")
     user = get_user(message.from_user.id)
     projects = get_asana_projects(user.asana_token)
     for project in projects:
-        print(project['name'], project['gid'])
+        await message.answer(project['name'], project['gid'])
+    await message.answer("//")
