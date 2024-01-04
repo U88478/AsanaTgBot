@@ -450,4 +450,4 @@ async def dk_command(message: Message):
     user = get_user(message.from_user.id)
     projects = get_asana_projects(user.asana_token)
     for project in projects:
-        print(project['name'], project['id'])
+        print(project['name'], project['gid'])
