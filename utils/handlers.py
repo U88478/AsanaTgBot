@@ -84,6 +84,7 @@ async def process_token(message: Message, state: FSMContext) -> None:
         await state.clear()
         asana_client = get_asana_client(message.from_user.id)
         workspaces = dict(asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'}))
+        print(workspaces)
         if len(workspaces) == 1:
             workspace_gid, workspace_name = next(iter(workspaces.items()))
             settings = create_default_settings_private(message.chat.id, workspace_gid, workspace_name, message.from_user.id)
