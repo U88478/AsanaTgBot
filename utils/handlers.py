@@ -330,8 +330,6 @@ async def asana_command(message: Message, state: FSMContext):
             description = match.group(4).strip() if match.group(4) else ""
 
             due_date = None
-            if due_date_str:
-                due_date = datetime.datetime.strptime(due_date_str, "%d.%m.%Y").date()
 
             assignee_asana_id = None
             if assignee_username:
@@ -371,10 +369,9 @@ def parse_date(due_date_str):
         try:
             return datetime.datetime.strptime(due_date_str, date_format).date()
         except ValueError:
-            pass
+            continue
     # Якщо жоден з форматів не підходить, поверніть None або викличте помилку
     return None
-
 
 
 # Функція для отримання задач на сьогодні
