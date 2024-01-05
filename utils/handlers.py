@@ -270,7 +270,7 @@ async def save_settings(message: Message, state: FSMContext) -> None:
     settings = await state.get_data()
     
     
-    create_default_settings(message.chat.id, settings["workspace_id"], settings["workspace_name"], settings["project_id"], settings["project_name"], section_id, section_name, message.from_user.id)
+    create_default_settings(message.chat.id, settings["workspace_id"], settings["workspace_name"], settings["project_id"], settings["project_name"], settings["section_id"], settings["section_name"], message.from_user.id)
     await message.answer("Налаштування успішно змінено!", reply_markup=ReplyKeyboardRemove())
     settings = get_default_settings(message.chat.id)
     if settings.toggle_stickers:
