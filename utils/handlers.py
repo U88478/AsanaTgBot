@@ -84,13 +84,14 @@ async def process_token(message: Message, state: FSMContext) -> None:
         await state.clear()
         asana_client = get_asana_client(message.from_user.id)
         workspaces = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
-        workspaces_list = []
-        for workspace in workspaces:
-            workspaces_list.append(workspace)
+        # workspaces_list = []
+        # for workspace in workspaces:
+        #     workspaces_list.append(workspace)
 
-        print(workspaces_list)
-        if len(workspaces_list) == 1:
-            workspace_gid, workspace_name = next(iter(workspaces.items()))
+        # print(workspaces_list)
+        workspaces = dict(workspaces)
+        if len(workspaces) == 1:
+            workspace_gid, workspace_name = next(iter(workspaces.values()))
             settings = create_default_settings_private(message.chat.id, workspace_gid, workspace_name, message.from_user.id)
             if settings:
                 await message.answer(f"За замовченням для Ваших задач в цьому чаті буде використовуватися робочий простір “{workspace_name}”")
