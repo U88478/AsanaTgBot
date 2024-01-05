@@ -89,6 +89,10 @@ async def process_token(message: Message, state: FSMContext) -> None:
             settings = create_default_settings_private(message.chat.id, workspace_gid, workspace_name, message.from_user.id)
             if settings:
                 await message.answer(f"За замовченням для Ваших задач в цьому чаті буде використовуватися робочий простір “{workspace_name}”")
+                if new_user:
+                    await message.answer(f"Вітаю, {message.from_user.first_name}! Тепер Ви можете створювати "
+                                 f"та закривати задачі з розділу “Мої задачі“ прямо з цього чату або "
+                                 f"додати бота у чат команди та керувати задачами спільного проекту.")
                 return
 
         await state.set_state(DefaultSettingsPrivate.workspace)
