@@ -1,6 +1,6 @@
 from traitlets import Bool
 from utils.config import db_url
-from sqlalchemy import Column, String, BigInteger, create_engine
+from sqlalchemy import Boolean, Column, String, BigInteger, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -28,7 +28,7 @@ class DefaultSettings(Base):
     section_id = Column(String, nullable=False)
     section_name = Column(String, nullable=False)
     notification_user_id = Column(BigInteger, nullable=False)
-    toggle_stickers = Column(Bool, nullable=False)
+    toggle_stickers = Column(Boolean, nullable=False)
 
 
 # Підключення до бази даних
