@@ -264,6 +264,7 @@ async def save_settings(message: Message, state: FSMContext) -> None:
     print(project_id)
     print(project_name)
     print(section_name)
+    print("\n\n")
 
     asana_client = get_asana_client(message.from_user.id)
     sections = asana.SectionsApi(asana_client).get_sections_for_project(project_id, {'opt_fields': 'name'})
@@ -275,6 +276,12 @@ async def save_settings(message: Message, state: FSMContext) -> None:
     # send settings
     settings = await state.get_data()
     
+    print(settings["workspace_id"])
+    print(settings["workspace_name"])
+    print(settings["project_id"])
+    print(settings["project_name"])
+    print(section_name)
+    print(section_id)
     
     create_default_settings(message.chat.id, settings["workspace_id"], settings["workspace_name"], settings["project_id"], settings["project_name"], section_id, section_name, message.from_user.id)
     await message.answer("Налаштування успішно змінено!", reply_markup=ReplyKeyboardRemove())
