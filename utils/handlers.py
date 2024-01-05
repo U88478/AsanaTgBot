@@ -84,8 +84,9 @@ async def process_token(message: Message, state: FSMContext) -> None:
         await state.clear()
         asana_client = get_asana_client(message.from_user.id)
         workspaces_generator = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
+        print(workspaces_generator)
         workspaces = {workspace['gid']: workspace['name'] for workspace in workspaces_generator}
-
+        print(workspaces)
 
         if len(workspaces) == 1:
             workspace_gid, workspace_name = next(iter(workspaces.values()))
