@@ -282,6 +282,7 @@ async def save_settings(message: Message, state: FSMContext) -> None:
     print(settings["project_name"])
     print(section_name)
     print(section_id)
+    print("\n\n")
     
     create_default_settings(message.chat.id, settings["workspace_id"], settings["workspace_name"], settings["project_id"], settings["project_name"], section_id, section_name, message.from_user.id)
     await message.answer("Налаштування успішно змінено!", reply_markup=ReplyKeyboardRemove())
