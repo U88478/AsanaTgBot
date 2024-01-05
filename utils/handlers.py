@@ -2,6 +2,7 @@ from asyncio import tasks
 import datetime
 import logging
 import re
+from tabnanny import check
 from aiogram import Router
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from aiogram.filters import Command, CommandStart, StateFilter
@@ -14,6 +15,7 @@ from bot.bot_instance import bot
 from utils.config import *
 from utils.helpers import *
 from utils.refresh_token_wrap import refresh_token
+from utils.settings_decorator import check_settings
 from utils.states.authorization import Authorization
 from utils.states.default_settings import DefaultSettings
 from utils.states.report_task import ReportTask
@@ -277,6 +279,7 @@ async def save_settings(message: Message, state: FSMContext) -> None:
 
 @router.message(Command("asana"))
 @refresh_token
+@check_settings
 async def asana_command(message: Message, state: FSMContext):
     text = message.text
     asana_client = get_asana_client(message.from_user.id)
