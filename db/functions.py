@@ -60,13 +60,24 @@ def create_default_settings_private(chat_id: int, workspace_id: str, workspace_n
     session.commit()
     return True
 
-def create_default_settings(chat_id: int, workspace_id: str, project_id: str,
+def create_default_settings(chat_id: int, workspace_id: str, workspace_name: str, project_id: str,
                             project_name: str, section_id: str, section_name: str, user_id: int, stickers: bool = True):
     settings = session.query(DefaultSettings).filter(DefaultSettings.chat_id == chat_id).first()
+
+    print(chat_id)
+    print(workspace_id)
+    print(workspace_id)
+    print(project_id)
+    print(project_name)
+    print(section_id)
+    print(section_name)
+    print(user_id)
+    print(stickers)
 
     if settings:
         # Якщо запис існує, оновлюємо його значення
         settings.workspace_id = workspace_id
+        settings.workspace_name = workspace_name
         settings.project_id = project_id
         settings.project_name = project_name
         settings.section_id = section_id
@@ -78,6 +89,7 @@ def create_default_settings(chat_id: int, workspace_id: str, project_id: str,
         settings = DefaultSettings(
             chat_id=chat_id,
             workspace_id=workspace_id,
+            workspace_name=workspace_name,
             project_id=project_id,
             project_name=project_name,
             section_id=section_id,
