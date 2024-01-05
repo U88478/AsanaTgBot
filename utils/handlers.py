@@ -347,7 +347,8 @@ async def asana_command(message: Message, state: FSMContext):
                 }
             }
             if due_date:
-                due_date = parse_date(due_date)
+                date_format = "%d.%m.%Y" if len(due_date_str.split('.')[-1]) == 4 else "%d.%m.%y"
+                due_date = datetime.datetime.strptime(due_date_str, date_format).date()
                 body["data"]["due_on"] = due_date.isoformat()
             if assignee_asana_id:
                 body["data"]["assignee"] = assignee_asana_id
