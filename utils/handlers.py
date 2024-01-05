@@ -277,22 +277,51 @@ async def save_settings(message: Message, state: FSMContext) -> None:
 
 @router.message(Command("asana"))
 @refresh_token
-async def create_asana_task(message: Message, state: FSMContext):
+async def asana_command(message: Message, state: FSMContext):
     text = message.text
-    command = text.split("@")[0][6:].strip()
-    print(command)
     asana_client = get_asana_client(message.from_user.id)
-    # Отримання налаштувань за замовчуванням з бази даних
     settings = get_default_settings(message.chat.id)
 
+    pattern = r"/asana\s+(.+?)(?:\s+@(\w+))?(?:\s+до\s+(\d{1,2}\.\d{1,2}\.\d{2,4}))?\s*(.*)"
+    match = re.match(pattern, text)
 
-    if not command:
+    if match:
+        command = match.group(1).strip()
 
-        pattern = r"/asana\s+(.+?)(?:\s+@(\w+))?(?:\s+до\s+(\d{1,2}\.\d{1,2}\.\d{2,4}))?\s*(.*)"
-        match = re.match(pattern, text)
+        if command == "complete":
+            # Логіка для команди "complete"
+            user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
+            if not user_tasks_dict:
+                await message.answer("На сьогодні задач немає.")
+                return
 
-        if match:
-            task_name = match.group(1).strip()
+            task_buttons = [[KeyboardButton(text=task['name'])] for task in user_tasks_dict.values()]
+            keyboard = ReplyKeyboardMarkup(
+                keyboard=task_buttons,
+                resize_keyboard=True,
+                one_time_keyboard=True
+            )
+
+            if task_buttons:
+                await message.answer("Оберіть задачу, яку бажаєте здати:", reply_markup=keyboard)
+                await state.set_state(ReportTask.TaskName)
+                await state.update_data(user_tasks_dict=user_tasks_dict)
+            else:
+                await message.answer("Наразі немає доступних задач.")
+
+        elif command == "duetoday":
+            # Логіка для команди "duetoday"
+            user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
+            if not user_tasks_dict:
+                await message.answer("На сьогодні задач немає.")
+                return
+
+            answer_text = "Завдання на сьогодні:\n" + "\n".join([f"🔸 {task['name']}" for task in user_tasks_dict.values()])
+            await message.answer(answer_text)
+
+        else:
+            # Створення задачі, якщо не вказано конкретної команди
+            task_name = command
             assignee_username = match.group(2)
             due_date_str = match.group(3)
             description = match.group(4).strip()
@@ -305,7 +334,6 @@ async def create_asana_task(message: Message, state: FSMContext):
             if assignee_username:
                 assignee_asana_id = get_asana_id_by_username(assignee_username)
 
-            # Створення задачі
             tasks_api_instance = asana.TasksApi(asana_client)
             body = {
                 "data": {
@@ -327,47 +355,8 @@ async def create_asana_task(message: Message, state: FSMContext):
                     await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
             except Exception as e:
                 await message.answer(f"Помилка при створенні задачі: {e}")
-        else:
-            await message.answer("Неправильний формат команди.")
-
-
-    #закрити таску зі звітом
-    if command == "complete":
-        # Отримання списку задач на сьогодні
-        user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
-
-        # Перевірка чи є доступні задачі
-        if not user_tasks_dict:
-            await message.answer("На сьогодні задач немає.")
-            return
-
-        # Створення кнопок для кожної задачі
-        task_buttons = [[KeyboardButton(text=task['name'])] for task in user_tasks_dict.values()]
-
-        # Створення реплай клавіатури з цими кнопками
-        keyboard = ReplyKeyboardMarkup(
-            keyboard=task_buttons,
-            resize_keyboard=True,
-            one_time_keyboard=True
-        )
-
-        if task_buttons:
-            await message.answer("Оберіть задачу, яку бажаєте здати:", reply_markup=keyboard)
-        
-            await state.set_state(ReportTask.TaskName)
-            await state.update_data(user_tasks_dict=user_tasks_dict)
-        else:
-            await message.answer("Наразі немає доступних задач.")
-
-    if command == "duetoday":
-        user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
-
-        if not user_tasks_dict:
-            await message.answer("На сьогодні задач немає.")
-            return
-
-        answer_text = "Завдання на сьогодні:\n" + "\n".join([f"🔸 {task['name']}" for task in user_tasks_dict.values()])
-        await message.answer(answer_text)
+    else:
+        await message.answer("Неправильний формат команди.")
 
 
 
