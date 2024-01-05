@@ -285,7 +285,8 @@ async def asana_command(message: Message, state: FSMContext):
     asana_client = get_asana_client(message.from_user.id)
     settings = get_default_settings(message.chat.id)
 
-    pattern = r"/asana\s+(.+?)(?:\s+@(\w+))?(?:\s+до\s+(\d{1,2}\.\d{1,2}\.\d{2,4}))?\s*(.*)"
+
+    pattern = r"/asana\s+(.+?)(?:\s+@(\w+))?(?:\s+до\s+(\d{1,2}\.\d{1,2}\.\d{2,4}))?\s*(\n.+)?"
     match = re.match(pattern, text)
 
     if match:
@@ -323,11 +324,10 @@ async def asana_command(message: Message, state: FSMContext):
             await message.answer(answer_text)
 
         else:
-            # Створення задачі, якщо не вказано конкретної команди
-            task_name = command
+            # Створення задачі
             assignee_username = match.group(2)
             due_date_str = match.group(3)
-            description = match.group(4).strip()
+            description = match.group(4).strip() if match.group(4) else ""
 
             due_date = None
             if due_date_str:
@@ -340,7 +340,7 @@ async def asana_command(message: Message, state: FSMContext):
             tasks_api_instance = asana.TasksApi(asana_client)
             body = {
                 "data": {
-                    "name": task_name,
+                    "name": command,
                     "notes": description,
                     "workspace": settings.workspace_id,
                     "projects": [settings.project_id]
@@ -359,6 +359,7 @@ async def asana_command(message: Message, state: FSMContext):
                     await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
             except Exception as e:
                 await message.answer(f"Помилка при створенні задачі: {e}")
+
     else:
         await message.answer("Неправильний формат команди.")
 

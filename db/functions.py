@@ -64,15 +64,6 @@ def create_default_settings(chat_id: int, workspace_id: str, workspace_name: str
                             project_name: str, section_id: str, section_name: str, user_id: int, stickers: bool = True):
     settings = session.query(DefaultSettings).filter(DefaultSettings.chat_id == chat_id).first()
 
-    print(chat_id)
-    print(workspace_id)
-    print(workspace_id)
-    print(project_id)
-    print(project_name)
-    print(section_id)
-    print(section_name)
-    print(user_id)
-    print(stickers)
 
     if settings:
         # Якщо запис існує, оновлюємо його значення
