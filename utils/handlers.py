@@ -286,7 +286,7 @@ async def asana_command(message: Message, state: FSMContext):
     settings = get_default_settings(message.chat.id)
 
 
-    pattern = r"/asana\s+([\s\S]+?)(?:\s+@(\w+))?(?:\s+до\s+(\d{1,2}\.\d{1,2}\.\d{2,4}))?\s*(\n[\s\S]+)?"
+    pattern = r"/asana\s+(.*?)(?:\s+@(\w+))?(?:\s+до\s+(\d{2}\.\d{2}\.\d{2}))?(?:\n(.*))?$"
     match = re.match(pattern, text)
 
     if match:
