@@ -85,7 +85,6 @@ async def process_token(message: Message, state: FSMContext) -> None:
         asana_client = get_asana_client(message.from_user.id)
         workspaces_generator = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
         workspaces = {workspace['gid']: workspace['name'] for workspace in workspaces_generator}
-        print(workspaces)
 
         if len(workspaces) == 1:
             workspace_gid, workspace_name = next(iter(workspaces.items()))
@@ -289,44 +288,47 @@ async def create_asana_task(message: Message, state: FSMContext):
 
     if not command:
 
-        # формат команди: /asana @user1 @user2 Назва завдання до дд.мм.рррр Опис завдання
-        pattern = r"/asana((?: @\w+)+)\s+(.+?)\s+до\s+(\d{1,2}\.\d{1,2}\.\d{4})\s+(.+)"
+        pattern = r"/asana\s+(.+?)(?:\s+@(\w+))?(?:\s+до\s+(\d{1,2}\.\d{1,2}\.\d{2,4}))?\s*(.*)"
         match = re.match(pattern, text)
-        if not match:
-            await message.answer("Неправильний формат команди.")
-            return
 
-        assignee_username = match.group(1).strip('@ ').split()[0]  # юзернейм виконавця
-        task_name = match.group(2).strip()  # Назва завдання
-        due_date = datetime.datetime.strptime(match.group(3), "%d.%m.%Y").date()  # Дата завершення
-        description = match.group(4).strip()  # Опис завдання
+        if match:
+            task_name = match.group(1).strip()
+            assignee_username = match.group(2)
+            due_date_str = match.group(3)
+            description = match.group(4).strip()
 
-        # Отримання асана ід виконавця за його тг юзернеймом з бази даних
-        assignee_asana_id = get_asana_id_by_username(assignee_username)
+            due_date = None
+            if due_date_str:
+                due_date = datetime.datetime.strptime(due_date_str, "%d.%m.%Y").date()
 
-        # створення задачі
-        tasks_api_instance = asana.TasksApi(asana_client)
-        body = {
-            "data": {
-                "name": task_name,
-                "notes": description,
-                "due_on": due_date.isoformat(),
-                "workspace": settings.workspace_id,
-                "projects": [settings.project_id],
-                "assignee": assignee_asana_id
+            assignee_asana_id = None
+            if assignee_username:
+                assignee_asana_id = get_asana_id_by_username(assignee_username)
+
+            # Створення задачі
+            tasks_api_instance = asana.TasksApi(asana_client)
+            body = {
+                "data": {
+                    "name": task_name,
+                    "notes": description,
+                    "workspace": settings.workspace_id,
+                    "projects": [settings.project_id]
+                }
             }
-        }
-        opts = {
+            if due_date:
+                body["data"]["due_on"] = due_date.isoformat()
+            if assignee_asana_id:
+                body["data"]["assignee"] = assignee_asana_id
 
-        }
-
-        try:
-            tasks_api_instance.create_task(body, opts)
-            await message.answer(f"Задача створена")
-            if settings.toggle_stickers:
-                await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
-        except Exception as e:
-            await message.answer(f"Помилка при створенні задачі: {e}")
+            try:
+                tasks_api_instance.create_task(body)
+                await message.answer("Задача створена")
+                if settings.toggle_stickers:
+                    await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
+            except Exception as e:
+                await message.answer(f"Помилка при створенні задачі: {e}")
+        else:
+            await message.answer("Неправильний формат команди.")
 
 
     #закрити таску зі звітом
