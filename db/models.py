@@ -23,10 +23,11 @@ class DefaultSettings(Base):
 
     chat_id = Column(BigInteger, primary_key=True)
     workspace_id = Column(String, nullable=False)
-    project_id = Column(String, nullable=False)
-    project_name = Column(String, nullable=False)
-    section_id = Column(String, nullable=False)
-    section_name = Column(String, nullable=False)
+    workspace_name = Column(String, nullable=False)
+    project_id = Column(String, nullable=True)
+    project_name = Column(String, nullable=True)
+    section_id = Column(String, nullable=True)
+    section_name = Column(String, nullable=True)
     notification_user_id = Column(BigInteger, nullable=False)
     toggle_stickers = Column(Boolean, nullable=False)
 

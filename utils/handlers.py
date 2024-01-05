@@ -17,6 +17,7 @@ from utils.refresh_token_wrap import refresh_token
 from utils.states.authorization import Authorization
 from utils.states.default_settings import DefaultSettings
 from utils.states.report_task import ReportTask
+from utils.states.default_settings_private import DefaultSettingsPrivate
 
 router = Router()
 
@@ -29,6 +30,10 @@ def is_private(message: Message):
 
 @router.message(CommandStart(), is_private)
 async def start(message: Message, state: FSMContext) -> None:
+    user = get_user(message.from_user.id)
+    if user:
+        await message.answer("Ви вже авторизовані!")
+        return
     reply_keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [
@@ -74,16 +79,53 @@ async def process_token(message: Message, state: FSMContext) -> None:
             new_user = True
         create_user(message.from_user.id, message.from_user.first_name, message.from_user.username, token,
                     refresh_token, asana_id)
-        await message.answer(f"Вітаю. Ви успішно авторизувалися!", reply_markup=ReplyKeyboardRemove())
-        if new_user:
-            await message.answer('Тепер ви можете створювати та закривати задачі в розділі'
-                                '"Мої задачі" прямо з цього чату або додати бота у чат команди'
-                                ' та керувати задачами спільного проекту.')
+        await message.answer(f"Ви успішно авторизувалися!", reply_markup=ReplyKeyboardRemove())
+        
         await state.clear()
+        asana_client = get_asana_client(message.from_user.id)
+        workspaces = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
+        if len(workspaces) == 1:
+            settings = create_default_settings_private(message.chat.id, workspaces[0].gid, workspaces[0].name, message.from_user.id)
+            if settings:
+                await message.answer(f"За замовченням для Ваших задач в цьому чаті буде використовуватися робочий простір “{workspaces[0].name}”")
+                return
+
+        await state.set_state(DefaultSettingsPrivate.workspace)
+        await state.update_data(new_user=new_user)
+
+        workspace_buttons = [KeyboardButton(text=workspace['name']) for workspace in workspaces]
+        keyboard = ReplyKeyboardMarkup(
+            keyboard=[workspace_buttons],
+            resize_keyboard=True,
+            one_time_keyboard=True
+        )
+
+        await message.answer("Будь ласка оберіть робочий простір за замовченням для Ваших задач в цьому чаті:", reply_markup=keyboard)
     else:
         await message.reply("Трясця! Щось пішло не так.\n\nЦе не схоже на токен, спробуйте ще раз")
 
 
+@router.message(DefaultSettingsPrivate.workspace)
+async def select_workspace_private(message: Message, state: FSMContext):
+    workspace_name = message.text
+    asana_client = get_asana_client(message.from_user.id)
+
+    workspaces = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
+    workspace_id = next((workspace['gid'] for workspace in workspaces if workspace['name'] == workspace_name), None)
+
+    settings = create_default_settings_private(message.chat.id, workspace_id, workspace_name, message.from_user.id)
+
+    if settings:
+        await message.answer(f"Ваш воркспейс за замовченням - “{workspace_name}”.")
+
+        data = await state.get_data() 
+        new_user = data['new_user']
+
+        if new_user:
+            await message.answer(f"Вітаю, {message.from_user.first_name}! Тепер Ви можете створювати "
+                                 f"та закривати задачі з розділу “Мої задачі“ прямо з цього чату або "
+                                 f"додати бота у чат команди та керувати задачами спільного проекту.")
+    
 @router.message(Command("stop"), is_private)
 async def revoke_asana_token(message: Message):
     user = get_user(message.from_user.id)
@@ -128,11 +170,14 @@ async def delete_command(message: Message):
 @router.message(Command("stickers"))
 async def stickers_command(message: Message):
     settings = get_default_settings(message.chat.id)
-    toggle_stickers(message.chat.id)
-    if settings.toggle_stickers:
-        await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
+    if settings:
+        toggle_stickers(message.chat.id)
+        if settings.toggle_stickers:
+            await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
+        else:
+            await message.answer("Наліпки вимкнеко.")
     else:
-        await message.answer("Наліпки вимкнеко.")
+        await message.answer("Спочатку оберіть налаштування за умовчанням за допомогою команди /link в цьому чаті")
 
 
 @router.message(Command("link"))

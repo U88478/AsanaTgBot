@@ -36,6 +36,29 @@ def delete_user(tg_id: int):
     session.commit()
     return True
 
+def create_default_settings_private(chat_id: int, workspace_id: str, workspace_name: str, notification_user_id: int, stickers: bool = True):
+    settings = session.query(DefaultSettings).filter(DefaultSettings.chat_id == chat_id).first()
+
+    if settings:
+        # Якщо запис існує, оновлюємо його значення
+        settings.chat_id = chat_id
+        settings.workspace_id = workspace_id
+        settings.workspace_name = workspace_name
+        settings.notification_user_id = notification_user_id
+        settings.toggle_stickers = stickers
+    else:
+        # Якщо запис не існує, створюємо новий запис
+        settings = DefaultSettings(
+            chat_id=chat_id,
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+            notification_user_id=notification_user_id,
+            toggle_stickers=stickers
+        )
+
+    session.add(settings)
+    session.commit()
+    return True
 
 def create_default_settings(chat_id: int, workspace_id: str, project_id: str,
                             project_name: str, section_id: str, section_name: str, user_id: int, stickers: bool = True):
@@ -65,6 +88,7 @@ def create_default_settings(chat_id: int, workspace_id: str, project_id: str,
 
     session.add(settings)
     session.commit()
+    return True
 
 def get_default_settings_for_notification() -> DefaultSettings:
     settings = session.query(DefaultSettings).filter(and_(DefaultSettings.notification_user_id != None, DefaultSettings.chat_id < 0)).all()
