@@ -286,7 +286,7 @@ async def asana_command(message: Message, state: FSMContext):
     settings = get_default_settings(message.chat.id)
 
 
-    pattern = r"/asana\s+(.*?)(?:\s+@(\w+))?(?:\s+до\s+(\d{2}\.\d{2}\.\d{2}))?(?:\n(.*))?$"
+    pattern = r"/asana\s+(.*?)(?:\s+@(\w+))?(?:\s+до\s+(\d{1,2}\.\d{1,2}\.\d{2}(?:\d{2})?))?(?:\n(.*))?$"
     match = re.match(pattern, text)
 
     if match:
@@ -347,6 +347,7 @@ async def asana_command(message: Message, state: FSMContext):
                 }
             }
             if due_date:
+                due_date = parse_date(due_date)
                 body["data"]["due_on"] = due_date.isoformat()
             if assignee_asana_id:
                 body["data"]["assignee"] = assignee_asana_id
@@ -363,6 +364,14 @@ async def asana_command(message: Message, state: FSMContext):
     else:
         await message.answer("Неправильний формат команди.")
 
+
+def parse_date(date_str):
+    if date_str:
+        # Визначаємо формат дати
+        date_format = "%d.%m.%Y" if len(date_str.split('.')[-1]) == 4 else "%d.%m.%y"
+        # Перетворюємо рядок у дату
+        return datetime.strptime(date_str, date_format)
+    return None
 
 
 # Функція для отримання задач на сьогодні
