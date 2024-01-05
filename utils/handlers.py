@@ -346,9 +346,9 @@ async def asana_command(message: Message, state: FSMContext):
                     "projects": [settings.project_id]
                 }
             }
+            if due_date_str:
+                due_date = parse_date(due_date_str)
             if due_date:
-                date_format = "%d.%m.%Y" if len(due_date_str.split('.')[-1]) == 4 else "%d.%m.%y"
-                due_date = datetime.datetime.strptime(due_date_str, date_format).date()
                 body["data"]["due_on"] = due_date.isoformat()
             if assignee_asana_id:
                 body["data"]["assignee"] = assignee_asana_id
@@ -366,13 +366,15 @@ async def asana_command(message: Message, state: FSMContext):
         await message.answer("Неправильний формат команди.")
 
 
-def parse_date(date_str):
-    if date_str:
-        # Визначаємо формат дати
-        date_format = "%d.%m.%Y" if len(date_str.split('.')[-1]) == 4 else "%d.%m.%y"
-        # Перетворюємо рядок у дату
-        return datetime.strptime(date_str, date_format)
+def parse_date(due_date_str):
+    for date_format in ("%d.%m.%Y", "%d.%m.%y"):
+        try:
+            return datetime.datetime.strptime(due_date_str, date_format).date()
+        except ValueError:
+            pass
+    # Якщо жоден з форматів не підходить, поверніть None або викличте помилку
     return None
+
 
 
 # Функція для отримання задач на сьогодні
