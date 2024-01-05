@@ -38,7 +38,7 @@ def delete_user(tg_id: int):
 
 
 def create_default_settings(chat_id: int, workspace_id: str, project_id: str,
-                            project_name: str, section_id: str, section_name: str, user_id: int):
+                            project_name: str, section_id: str, section_name: str, user_id: int, stickers: bool = True):
     settings = session.query(DefaultSettings).filter(DefaultSettings.chat_id == chat_id).first()
 
     if settings:
@@ -49,6 +49,7 @@ def create_default_settings(chat_id: int, workspace_id: str, project_id: str,
         settings.section_id = section_id
         settings.section_name = section_name
         settings.notification_user_id = user_id
+        settings.toggle_stickers = stickers
     else:
         # Якщо запис не існує, створюємо новий запис
         settings = DefaultSettings(
@@ -58,7 +59,8 @@ def create_default_settings(chat_id: int, workspace_id: str, project_id: str,
             project_name=project_name,
             section_id=section_id,
             section_name=section_name,
-            notification_user_id=user_id
+            notification_user_id=user_id,
+            toggle_stickers=stickers
         )
 
     session.add(settings)
@@ -72,6 +74,11 @@ def get_default_settings(chat_id: int) -> DefaultSettings:
     settings = session.query(DefaultSettings).filter(DefaultSettings.chat_id == chat_id).first()
     return settings
 
+def toggle_stickers(chat_id: int):
+    chat_settings = get_default_settings(chat_id)
+    if chat_settings:
+        chat_settings.stickers = not chat_settings.stickers
+        session.commit()
 
 def delete_settings(chat_id: int):
     session.query(DefaultSettings).filter(DefaultSettings.chat_id == chat_id).delete()

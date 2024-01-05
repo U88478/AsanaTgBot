@@ -87,9 +87,11 @@ async def process_token(message: Message, state: FSMContext) -> None:
 @router.message(Command("stop"), is_private)
 async def revoke_asana_token(message: Message):
     user = get_user(message.from_user.id)
+    settings = get_default_settings(message.chat.id)
     if not user or not user.asana_token or not user.asana_refresh_token:
         await message.reply("Ви і без цього не були зареєстровані.")
-        await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
+        if settings.toggle_stickers:
+            await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
         return
     url = "https://app.asana.com/-/oauth_revoke"
     payload = {
@@ -104,7 +106,8 @@ async def revoke_asana_token(message: Message):
         print("Token successfully revoked.")
         create_user(message.from_user.id, message.from_user.first_name, message.from_user.username, None, None, user.asana_id)
         await message.answer("Ваш токен успішно видалено.")
-        await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
+        if settings.toggle_stickers:
+            await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
     else:
         print("Failed to revoke token:", response.text)
 
@@ -117,8 +120,19 @@ async def delete_command(message: Message):
         delete_result = delete_user(message.from_user.id)
     if delete_result or not user:
         await message.reply("Вас було успішно видалено з бази даних.")
-        await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
+        settings = get_default_settings(message.chat.id)
+        if settings.toggle_stickers:
+            await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
        
+
+@router.message(Command("stickers"))
+async def stickers_command(message: Message):
+    settings = get_default_settings(message.chat.id)
+    toggle_stickers(message.chat.id)
+    if settings.toggle_stickers:
+        await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
+    else:
+        await message.answer("Наліпки вимкнеко.")
 
 
 @router.message(Command("link"))
@@ -204,7 +218,9 @@ async def save_settings(message: Message, state: FSMContext) -> None:
     
     create_default_settings(message.chat.id, settings["workspace_id"], settings["project_id"], settings["project_name"], section_id, section_name, message.from_user.id)
     await message.answer("Налаштування успішно змінено!", reply_markup=ReplyKeyboardRemove())
-    await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
+    settings = get_default_settings(message.chat.id)
+    if settings.toggle_stickers:
+        await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
     await state.clear()
 
 @router.message(Command("asana"))
@@ -254,7 +270,8 @@ async def create_asana_task(message: Message, state: FSMContext):
         try:
             tasks_api_instance.create_task(body, opts)
             await message.answer(f"Задача створена")
-            await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
+            if settings.toggle_stickers:
+                await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
         except Exception as e:
             await message.answer(f"Помилка при створенні задачі: {e}")
 
@@ -378,7 +395,9 @@ async def handle_task_selection(message: Message, state: FSMContext):
     try:
         tasks_api_instance.update_task(body, task_gid, opts)
         await message.answer(f"Звіт здано", reply_markup=ReplyKeyboardRemove())
-        await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
+        settings = get_default_settings(message.chat.id)
+        if settings.toggle_stickers:
+            await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
         await state.clear()
     except Exception as e:
         await message.answer(f"Помилка: {e}", reply_markup=ReplyKeyboardRemove())
