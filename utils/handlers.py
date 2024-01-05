@@ -259,6 +259,12 @@ async def save_settings(message: Message, state: FSMContext) -> None:
     project_id = data['project_id']
     section_name = message.text
 
+    print(workspace_id)
+    print(workspace_name)
+    print(project_id)
+    print(project_name)
+    print(section_name)
+
     asana_client = get_asana_client(message.from_user.id)
     sections = asana.SectionsApi(asana_client).get_sections_for_project(project_id, {'opt_fields': 'name'})
     section_id = next((section['gid'] for section in sections if section['name'] == section_name), None)
