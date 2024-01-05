@@ -259,13 +259,6 @@ async def save_settings(message: Message, state: FSMContext) -> None:
     project_id = data['project_id']
     section_name = message.text
 
-    print(workspace_id)
-    print(workspace_name)
-    print(project_id)
-    print(project_name)
-    print(section_name)
-    print("\n\n")
-
     asana_client = get_asana_client(message.from_user.id)
     sections = asana.SectionsApi(asana_client).get_sections_for_project(project_id, {'opt_fields': 'name'})
     section_id = next((section['gid'] for section in sections if section['name'] == section_name), None)
@@ -276,13 +269,6 @@ async def save_settings(message: Message, state: FSMContext) -> None:
     # send settings
     settings = await state.get_data()
     
-    print(settings["workspace_id"])
-    print(settings["workspace_name"])
-    print(settings["project_id"])
-    print(settings["project_name"])
-    print(section_name)
-    print(section_id)
-    print("\n\n")
     
     create_default_settings(message.chat.id, settings["workspace_id"], settings["workspace_name"], settings["project_id"], settings["project_name"], section_id, section_name, message.from_user.id )
     await message.answer("Налаштування успішно змінено!", reply_markup=ReplyKeyboardRemove())
@@ -366,7 +352,8 @@ async def asana_command(message: Message, state: FSMContext):
                 body["data"]["assignee"] = assignee_asana_id
 
             try:
-                tasks_api_instance.create_task(body)
+                opts = {}
+                tasks_api_instance.create_task(body, opts)
                 await message.answer("Задача створена")
                 if settings.toggle_stickers:
                     await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
