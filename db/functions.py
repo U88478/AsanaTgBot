@@ -104,7 +104,7 @@ def get_default_settings(chat_id: int) -> DefaultSettings:
 def toggle_stickers(chat_id: int):
     chat_settings = get_default_settings(chat_id)
     if chat_settings:
-        chat_settings.stickers = not chat_settings.stickers
+        chat_settings.toggle_stickers = not chat_settings.toggle_stickers
         session.commit()
 
 def delete_settings(chat_id: int):
