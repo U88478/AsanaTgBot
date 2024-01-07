@@ -571,7 +571,7 @@ async def private_message(message: Message, state: FSMContext):
                 return
 
         # Виконавець - автор повідомлення
-        assignee_asana_id = settings.asana_user_id
+        assignee_asana_id = message.from_user.id
 
         tasks_api_instance = asana.TasksApi(asana_client)
         body = {
