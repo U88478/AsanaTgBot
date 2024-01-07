@@ -341,7 +341,6 @@ async def asana_command(message: Message, state: FSMContext):
                     "name": command,
                     "notes": description,
                     "workspace": settings.workspace_id,
-                    "projects": [settings.project_id if settings.project_id else None]
                 }
             }
             if due_date_str:
@@ -350,6 +349,8 @@ async def asana_command(message: Message, state: FSMContext):
                 body["data"]["due_on"] = due_date.isoformat()
             if assignee_asana_id:
                 body["data"]["assignee"] = assignee_asana_id
+            if settings.project_id:
+                body["data"]["projects"] = [settings.project_id]
 
             try:
                 opts = {}
