@@ -550,7 +550,7 @@ async def private_message(message: Message, state: FSMContext):
     settings = get_default_settings(message.chat.id)
 
     # Перевірка налаштувань користувача
-    if not settings or not settings.asana_user_id:
+    if not settings:
         await message.answer("Будь ласка, спочатку налаштуйте інтеграцію з Asana.")
         return
 
