@@ -539,3 +539,9 @@ async def dk_command(message: Message):
     user = get_user(message.from_user.id)
     user_task_list = get_user_task_list(user.asana_id, user.asana_token)
     await message.answer(user_task_list)
+
+
+#* should be at the very end
+@router.message(is_private)
+async def private_message(message: Message, state: FSMContext):
+    await asana_command(message, state)
