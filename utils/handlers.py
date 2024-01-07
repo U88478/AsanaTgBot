@@ -341,7 +341,7 @@ async def asana_command(message: Message, state: FSMContext):
                     "name": command,
                     "notes": description,
                     "workspace": settings.workspace_id,
-                    "projects": [settings.project_id]
+                    "projects": [settings.project_id if settings.project_id else None]
                 }
             }
             if due_date_str:
