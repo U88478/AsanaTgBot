@@ -545,4 +545,56 @@ async def dk_command(message: Message):
 #* should be at the very end
 @router.message(is_private)
 async def private_message(message: Message, state: FSMContext):
-    await asana_command(message, state)
+    text = message.text
+    asana_client = get_asana_client(message.from_user.id)
+    settings = get_default_settings(message.chat.id)
+
+    # Перевірка налаштувань користувача
+    if not settings or not settings.asana_user_id:
+        await message.answer("Будь ласка, спочатку налаштуйте інтеграцію з Asana.")
+        return
+
+    pattern = r"(.+?)(?:\s+до\s+(\d{1,2}\.\d{1,2}\.\d{2}(?:\d{2})?))?(?:\n(.*))?$"
+    match = re.match(pattern, text)
+
+    if match:
+        task_name = match.group(1).strip()
+        due_date_str = match.group(2)
+        description = match.group(3).strip() if match.group(3) else ""
+
+        due_date = None
+        if due_date_str:
+            try:
+                due_date = datetime.datetime.strptime(due_date_str, "%d.%m.%Y").date()
+            except ValueError:
+                await message.answer("Неправильний формат дати. Використовуйте формат ДД.ММ.РРРР.")
+                return
+
+        # Виконавець - автор повідомлення
+        assignee_asana_id = settings.asana_user_id
+
+        tasks_api_instance = asana.TasksApi(asana_client)
+        body = {
+            "data": {
+                "name": task_name,
+                "notes": description,
+                "workspace": settings.workspace_id,
+                "assignee": assignee_asana_id
+            }
+        }
+        if settings.project_id:
+            body["data"]["projects"] = [settings.project_id]
+        if due_date:
+            body["data"]["due_on"] = due_date.isoformat()
+
+        opts = {}
+
+        try:
+            tasks_api_instance.create_task(body, opts)
+            await message.answer("Задача створена")
+            if settings.toggle_stickers:
+                await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
+        except Exception as e:
+            await message.answer(f"Помилка при створенні задачі: {e}")
+    else:
+        await message.answer("Будь ласка, вкажіть назву задачі.")
