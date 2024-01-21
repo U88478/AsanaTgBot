@@ -33,6 +33,9 @@ def is_private(message: Message):
 @router.message(CommandStart(), is_private)
 async def start(message: Message, state: FSMContext) -> None:
     user = get_user(message.from_user.id)
+    print(user)
+    print(user is not None)
+    print(user != None)
     if user != None:
         await message.answer("Ви вже авторизовані!")
         return
