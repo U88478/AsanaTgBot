@@ -3,6 +3,7 @@ import datetime
 import logging
 import re
 from tabnanny import check
+from tkinter import NO
 from aiogram import Router
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from aiogram.filters import Command, CommandStart, StateFilter
@@ -33,10 +34,7 @@ def is_private(message: Message):
 @router.message(CommandStart(), is_private)
 async def start(message: Message, state: FSMContext) -> None:
     user = get_user(message.from_user.id)
-    print(user)
-    print(user is not None)
-    print(user != None)
-    if user != None:
+    if user is not None and user.asana_token is not None:
         await message.answer("Ви вже авторизовані!")
         return
     reply_keyboard = ReplyKeyboardMarkup(
