@@ -544,6 +544,7 @@ async def dk_command(message: Message):
 
 #* should be at the very end
 @router.message(is_private)
+@refresh_token
 async def private_message(message: Message, state: FSMContext):
     text = message.text
     asana_client = get_asana_client(message.from_user.id)
