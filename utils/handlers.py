@@ -3,7 +3,6 @@ import datetime
 import logging
 import re
 from tabnanny import check
-from tkinter import NO
 from aiogram import Router
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from aiogram.filters import Command, CommandStart, StateFilter
