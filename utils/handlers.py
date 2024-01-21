@@ -33,7 +33,7 @@ def is_private(message: Message):
 @router.message(CommandStart(), is_private)
 async def start(message: Message, state: FSMContext) -> None:
     user = get_user(message.from_user.id)
-    if user:
+    if user != None:
         await message.answer("Ви вже авторизовані!")
         return
     reply_keyboard = ReplyKeyboardMarkup(
@@ -547,6 +547,10 @@ async def dk_command(message: Message):
 async def private_message(message: Message, state: FSMContext):
     text = message.text
     asana_client = get_asana_client(message.from_user.id)
+    if asana_client == None:
+        await message.answer("Спочатку ви маєте зареєструватися.")
+        await start()
+
     settings = get_default_settings(message.chat.id)
 
     # Перевірка налаштувань користувача
