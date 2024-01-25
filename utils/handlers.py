@@ -559,7 +559,7 @@ async def private_message(message: Message, state: FSMContext):
         await message.answer("Будь ласка, спочатку налаштуйте інтеграцію з Asana.")
         return
 
-    pattern = r"(.+?)(?:\s+до\s+(\d{1,2}\.\d{1,2}\.\d{2}(?:\d{2})?))?(?:\n(.*))?$"
+    pattern = r"(.*?)(?:\s+до\s+(\d{1,2}\.\d{1,2}\.\d{2}(?:\d{2})?))?(?:\n(.*))?$"
     match = re.match(pattern, text)
 
     if match:
