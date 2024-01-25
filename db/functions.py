@@ -20,7 +20,6 @@ def create_user(tg_id: int, tg_first_name: str, tg_username: str, asana_token: s
 
 def get_user(tg_id: int) -> Users:
     user = session.query(Users).filter(Users.tg_id == tg_id).first()
-    print(user)
     if not user:
         return None
     return user
