@@ -1,8 +1,11 @@
+# from typing import Any
+
 from sqlalchemy import and_
 from .models import Users, DefaultSettings, session
 
 
-def create_user(tg_id: int, tg_first_name: str, tg_username: str, asana_token: str, asana_refresh_token: str,
+def create_user(tg_id: int, tg_first_name: str, tg_username: str, asana_token: str | None,
+                asana_refresh_token: str | None,
                 asana_id: str):
     user = session.query(Users).filter(Users.tg_id == tg_id).first()
     if user:
@@ -18,18 +21,20 @@ def create_user(tg_id: int, tg_first_name: str, tg_username: str, asana_token: s
     session.commit()
 
 
-def get_user(tg_id: int) -> Users:
+def get_user(tg_id: int) -> Users | None:
     user = session.query(Users).filter(Users.tg_id == tg_id).first()
     if not user:
         return None
     return user
+
 
 def get_all_user_ids():
     users = session.query(Users).all()
     user_ids = [user.tg_id for user in users]
     return user_ids
 
-def get_asana_id_by_tg_id(tg_id: str) -> str:
+
+def get_asana_id_by_tg_id(tg_id: int) -> str:
     user = session.query(Users).filter(Users.tg_id == tg_id).first()
     return user.asana_id
 
@@ -38,12 +43,15 @@ def get_asana_id_by_username(username: str) -> str:
     user = session.query(Users).filter(Users.tg_username == username).first()
     return user.asana_id
 
+
 def delete_user(tg_id: int):
     session.query(Users).filter(Users.tg_id == tg_id).delete()
     session.commit()
     return True
 
-def create_default_settings_private(chat_id: int, workspace_id: str, workspace_name: str, notification_user_id: int, stickers: bool = True):
+
+def create_default_settings_private(chat_id: int, workspace_id: str, workspace_name: str, notification_user_id: int,
+                                    stickers: bool = True):
     settings = session.query(DefaultSettings).filter(DefaultSettings.chat_id == chat_id).first()
 
     if settings:
@@ -67,10 +75,10 @@ def create_default_settings_private(chat_id: int, workspace_id: str, workspace_n
     session.commit()
     return True
 
+
 def create_default_settings(chat_id: int, workspace_id: str, workspace_name: str, project_id: str,
                             project_name: str, section_id: str, section_name: str, user_id: int, stickers: bool = True):
     settings = session.query(DefaultSettings).filter(DefaultSettings.chat_id == chat_id).first()
-
 
     if settings:
         # Якщо запис існує, оновлюємо його значення
@@ -100,19 +108,24 @@ def create_default_settings(chat_id: int, workspace_id: str, workspace_name: str
     session.commit()
     return True
 
+
 def get_default_settings_for_notification() -> DefaultSettings:
-    settings = session.query(DefaultSettings).filter(and_(DefaultSettings.notification_user_id != None, DefaultSettings.chat_id < 0)).all()
+    settings = session.query(DefaultSettings).filter(
+        and_(DefaultSettings.notification_user_id != None, DefaultSettings.chat_id < 0)).all()
     return settings
+
 
 def get_default_settings(chat_id: int) -> DefaultSettings:
     settings = session.query(DefaultSettings).filter(DefaultSettings.chat_id == chat_id).first()
     return settings
+
 
 def toggle_stickers(chat_id: int):
     chat_settings = get_default_settings(chat_id)
     if chat_settings:
         chat_settings.toggle_stickers = not chat_settings.toggle_stickers
         session.commit()
+
 
 def delete_settings(chat_id: int):
     session.query(DefaultSettings).filter(DefaultSettings.chat_id == chat_id).delete()
