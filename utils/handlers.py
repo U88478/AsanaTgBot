@@ -327,6 +327,9 @@ async def asana_command(message: Message, state: FSMContext):
                 [f"🔸 {task['name']}" for task in user_tasks_dict.values()])
             await message.answer(answer_text)
 
+        elif command == "link":
+            await process_link_command(message, state)
+
         return
 
     if not parsed_data:
@@ -541,7 +544,48 @@ async def private_message(message: Message, state: FSMContext):
     text = message.text
     print(f"Received message: {text}")  # Debugging print
 
+    settings = get_default_settings(message.chat.id)
     parsed_data = parse_message_complete(text)
+    command = parsed_data.get("command")
+
+    if command:
+        print(f"Command detected: {command}")  # Debugging print
+
+        if command == "complete":
+            user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
+            if not user_tasks_dict:
+                await message.answer("На сьогодні задач немає.")
+                return
+
+            task_buttons = [[KeyboardButton(text=task['name'])] for task in user_tasks_dict.values()]
+            keyboard = ReplyKeyboardMarkup(
+                keyboard=task_buttons,
+                resize_keyboard=True,
+                one_time_keyboard=True
+            )
+
+            if task_buttons:
+                await message.answer("Оберіть задачу, яку бажаєте здати:", reply_markup=keyboard)
+                await state.set_state(ReportTask.TaskName)
+                await state.update_data(user_tasks_dict=user_tasks_dict)
+            else:
+                await message.answer("Наразі немає доступних задач.")
+
+        elif command == "duetoday":
+            user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
+            if not user_tasks_dict:
+                await message.answer("На сьогодні задач немає.")
+                return
+
+            answer_text = "Завдання на сьогодні:\n" + "\n".join(
+                [f"🔸 {task['name']}" for task in user_tasks_dict.values()])
+            await message.answer(answer_text)
+
+        elif command == "link":
+            await process_link_command(message, state)
+
+        return
+
     if not parsed_data:
         await message.answer("Неправильний формат повідомлення.")
         return
