@@ -11,7 +11,7 @@ from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKey
 from bot.bot_instance import bot
 from utils.asana_functions import *
 from utils.config import *
-from utils.parse_message import parse_message, parse_command
+from utils.parse_message import parse_message_complete
 from utils.refresh_token_wrap import refresh_token
 from utils.settings_decorator import check_settings
 from utils.states.authorization import Authorization
@@ -291,7 +291,9 @@ async def asana_command(message: Message, state: FSMContext):
     print(f"Received message: {text}")  # Debugging print
     settings = get_default_settings(message.chat.id)
 
-    command = parse_command(text)
+    parsed_data = parse_message_complete(text)
+    command = parsed_data.get("command")
+
     if command:
         print(f"Command detected: {command}")  # Debugging print
 
@@ -327,7 +329,6 @@ async def asana_command(message: Message, state: FSMContext):
 
         return
 
-    parsed_data = parse_message(text)
     if not parsed_data:
         await message.answer("Неправильний формат повідомлення.")
         return
@@ -340,13 +341,7 @@ async def asana_command(message: Message, state: FSMContext):
     asana_client = get_asana_client(message.from_user.id)
     settings = get_default_settings(message.chat.id)
 
-    due_date = None
-    if date:
-        try:
-            due_date = datetime.datetime.strptime(date, "%d.%m.%Y").date()
-        except ValueError:
-            await message.answer("Неправильний формат дати. Використовуйте формат ДД.ММ.РРРР.")
-            return
+    due_date = date
 
     assignee_asana_id = get_asana_id_by_username(assignees[0]) if assignees else get_asana_id_by_tg_id(
         message.from_user.id)
@@ -372,15 +367,6 @@ async def asana_command(message: Message, state: FSMContext):
         await message.answer(f"Задача створена: [Task Link]({task_permalink})", parse_mode='Markdown')
     except Exception as e:
         await message.answer(f"Помилка при створенні задачі: {e}")
-
-
-def parse_date(due_date_str):
-    for date_format in ("%d.%m.%Y", "%d.%m.%y"):
-        try:
-            return datetime.datetime.strptime(due_date_str, date_format).date()
-        except ValueError:
-            continue
-    return None
 
 
 # Функція для отримання задач на сьогодні
@@ -555,7 +541,7 @@ async def private_message(message: Message, state: FSMContext):
     text = message.text
     print(f"Received message: {text}")  # Debugging print
 
-    parsed_data = parse_message(text)
+    parsed_data = parse_message_complete(text)
     if not parsed_data:
         await message.answer("Неправильний формат повідомлення.")
         return
@@ -575,13 +561,7 @@ async def private_message(message: Message, state: FSMContext):
         await message.answer("Будь ласка, спочатку налаштуйте інтеграцію з Asana.")
         return
 
-    due_date = None
-    if date:
-        try:
-            due_date = datetime.datetime.strptime(date, "%d.%m.%Y").date()
-        except ValueError:
-            await message.answer("Неправильний формат дати. Використовуйте формат ДД.ММ.РРРР.")
-            return
+    due_date = date
 
     assignee_asana_id = get_asana_id_by_username(assignees[0]) if assignees else get_asana_id_by_tg_id(
         message.from_user.id)
