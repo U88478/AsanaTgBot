@@ -1,9 +1,5 @@
-import re
+from utils.parse_message import parse_message_complete
 
 text = "/asana duetoday"
 
-command_pattern = r"^/?asana\s*(complete|duetoday)"
-command_match = re.match(command_pattern, text)
-command = command_match.group(1) if command_match else None
-
-print(command)
+print(parse_message_complete(text))

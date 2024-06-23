@@ -1,4 +1,14 @@
+import datetime
 import re
+
+
+def parse_date(due_date_str):
+    for date_format in ("%d.%m.%Y", "%d.%m.%y"):
+        try:
+            return datetime.datetime.strptime(due_date_str, date_format).date()
+        except ValueError:
+            continue
+    return None
 
 
 def parse_message(text):
@@ -9,16 +19,20 @@ def parse_message(text):
         else:
             fr, desc = text, ""
 
-        # Extract the date
+        # Extract the date and validate it
         date_match = re.search(r'до\s+(\d{1,2}\.\d{1,2}\.\d{4})', fr)
-        date = date_match.group(1) if date_match else None
+        date = None
+        if date_match:
+            date_str = date_match.group(1)
+            date = parse_date(date_str)
+            if date:
+                fr = re.sub(r'до\s+' + re.escape(date_str), '', fr)  # Remove valid date from the task name
 
         # Extract the assignees
         assignees = re.findall(r'@(\w+)', fr)
 
-        # Remove all occurrences of @assignee and 'до' date to get the task name
+        # Remove all occurrences of @assignee to get the task name
         fr_cleaned = re.sub(r'@\w+', '', fr)  # Remove @assignee
-        fr_cleaned = re.sub(r'до\s+\S+', '', fr_cleaned)  # Remove 'до' date
         task_name = fr_cleaned.strip()
 
         return {
@@ -33,6 +47,19 @@ def parse_message(text):
 
 
 def parse_command(text):
-    command_pattern = r"^(complete|duetoday)"
-    command_match = re.match(command_pattern, text)
+    command_pattern = r"^(complete|duetoday|link)"
+    command_match = re.match(command_pattern, text.strip())
     return command_match.group(1) if command_match else None
+
+
+def parse_message_complete(text: str):
+    text = text.replace("/asana ", "").strip()
+    command = parse_command(text)
+    if command:
+        text = text.replace(command, "", 1).strip()
+    data = parse_message(text)
+    if not data["task_name"]:
+        data["task_name"] = "Untitled Task"
+    data["command"] = command
+    return data
+
