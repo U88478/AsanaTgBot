@@ -45,4 +45,4 @@ jobs:
         env:
           DATABASE_URL: postgres://test_user:test_pass@localhost:5432/test_db
         run: |
-          python -m unittest discover -s tests/parse_message_test.py
+          python -m unittest tests/parse_message_test.py
