@@ -4,7 +4,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.config import *
-from utils.helpers import encrypt_tokens
+from utils.token_encryption import encrypt_tokens
 
 app = Flask(__name__)
 

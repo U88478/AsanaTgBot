@@ -1,5 +1,4 @@
 import datetime
-import datetime
 import logging
 
 from aiogram import Router
@@ -12,13 +11,14 @@ from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKey
 from bot.bot_instance import bot
 from utils.asana_functions import *
 from utils.config import *
-from utils.helpers import *
+from utils.parse_message import parse_message, parse_command
 from utils.refresh_token_wrap import refresh_token
 from utils.settings_decorator import check_settings
 from utils.states.authorization import Authorization
 from utils.states.default_settings import DefaultSettings
 from utils.states.default_settings_private import DefaultSettingsPrivate
 from utils.states.report_task import ReportTask
+from utils.token_encryption import *
 
 router = Router()
 
@@ -192,8 +192,6 @@ async def stickers_command(message: Message):
         await message.answer("Спочатку оберіть налаштування за умовчанням за допомогою команди /link в цьому чаті")
 
 
-@router.message(Command("link"))
-@refresh_token
 async def process_link_command(message: Message, state: FSMContext) -> None:
     asana_client = get_asana_client(message.from_user.id)
     workspaces = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
@@ -290,19 +288,57 @@ async def save_settings(message: Message, state: FSMContext) -> None:
 @check_settings
 async def asana_command(message: Message, state: FSMContext):
     text = message.text
-    asana_client = get_asana_client(message.from_user.id)
+    print(f"Received message: {text}")  # Debugging print
     settings = get_default_settings(message.chat.id)
 
-    try:
-        fr, desc = text.split("\n", maxsplit=1)
-        date = str(fr).split("#", maxsplit=1)[1].split(maxsplit=1)[0]
-        assignee = [str(x.split(maxsplit=1)[0]) for x in str(fr).split("@")[1:]]
-    except (IndexError, ValueError):
-        await message.answer("Неправильний формат команди.")
+    command = parse_command(text)
+    if command:
+        print(f"Command detected: {command}")  # Debugging print
+
+        if command == "complete":
+            user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
+            if not user_tasks_dict:
+                await message.answer("На сьогодні задач немає.")
+                return
+
+            task_buttons = [[KeyboardButton(text=task['name'])] for task in user_tasks_dict.values()]
+            keyboard = ReplyKeyboardMarkup(
+                keyboard=task_buttons,
+                resize_keyboard=True,
+                one_time_keyboard=True
+            )
+
+            if task_buttons:
+                await message.answer("Оберіть задачу, яку бажаєте здати:", reply_markup=keyboard)
+                await state.set_state(ReportTask.TaskName)
+                await state.update_data(user_tasks_dict=user_tasks_dict)
+            else:
+                await message.answer("Наразі немає доступних задач.")
+
+        elif command == "duetoday":
+            user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
+            if not user_tasks_dict:
+                await message.answer("На сьогодні задач немає.")
+                return
+
+            answer_text = "Завдання на сьогодні:\n" + "\n".join(
+                [f"🔸 {task['name']}" for task in user_tasks_dict.values()])
+            await message.answer(answer_text)
+
         return
 
-    task_name = fr.split("@")[0].strip()
-    description = desc.strip()
+    parsed_data = parse_message(text)
+    if not parsed_data:
+        await message.answer("Неправильний формат повідомлення.")
+        return
+
+    task_name = parsed_data["task_name"]
+    description = parsed_data["description"]
+    date = parsed_data["date"]
+    assignees = parsed_data["assignees"]
+
+    asana_client = get_asana_client(message.from_user.id)
+    settings = get_default_settings(message.chat.id)
 
     due_date = None
     if date:
@@ -312,26 +348,20 @@ async def asana_command(message: Message, state: FSMContext):
             await message.answer("Неправильний формат дати. Використовуйте формат ДД.ММ.РРРР.")
             return
 
-    assignee_asana_id = None
-    if assignee:
-        assignee_asana_id = get_asana_id_by_username(assignee[0])
+    assignee_asana_id = get_asana_id_by_username(assignees[0]) if assignees else get_asana_id_by_tg_id(
+        message.from_user.id)
 
     body = {
         "data": {
             "name": task_name,
             "notes": description,
             "workspace": settings.workspace_id,
+            "assignee": assignee_asana_id
         }
     }
 
     if due_date:
         body["data"]["due_on"] = due_date.isoformat()
-
-    if assignee_asana_id:
-        body["data"]["assignee"] = assignee_asana_id
-
-    if settings.project_id:
-        body["data"]["projects"] = [settings.project_id]
 
     opts = {}
 
@@ -340,12 +370,8 @@ async def asana_command(message: Message, state: FSMContext):
         response = tasks_api_instance.create_task(body, opts)
         task_permalink = response.get('permalink_url', 'No permalink available')
         await message.answer(f"Задача створена: [Task Link]({task_permalink})", parse_mode='Markdown')
-    except ApiException as e:
-        logging.error(f"Asana API error: {e}")
-        await message.answer(f"Помилка при створенні задачі: {e}")
     except Exception as e:
-        logging.error(f"Unexpected error: {e}")
-        await message.answer(f"Unexpected error: {e}")
+        await message.answer(f"Помилка при створенні задачі: {e}")
 
 
 def parse_date(due_date_str):
@@ -527,6 +553,18 @@ async def dk_command(message: Message):
 @refresh_token
 async def private_message(message: Message, state: FSMContext):
     text = message.text
+    print(f"Received message: {text}")  # Debugging print
+
+    parsed_data = parse_message(text)
+    if not parsed_data:
+        await message.answer("Неправильний формат повідомлення.")
+        return
+
+    task_name = parsed_data["task_name"]
+    description = parsed_data["description"]
+    date = parsed_data["date"]
+    assignees = parsed_data["assignees"]
+
     asana_client = get_asana_client(message.from_user.id)
     if asana_client is None:
         await message.answer("Спочатку ви маєте зареєструватися.")
@@ -537,16 +575,6 @@ async def private_message(message: Message, state: FSMContext):
         await message.answer("Будь ласка, спочатку налаштуйте інтеграцію з Asana.")
         return
 
-    try:
-        fr, desc = text.split("\n", maxsplit=1)
-        date = str(fr).split("#", maxsplit=1)[1].split(maxsplit=1)[0]
-    except (IndexError, ValueError):
-        await message.answer("Неправильний формат команди.")
-        return
-
-    task_name = fr.split("@")[0].strip()
-    description = desc.strip()
-
     due_date = None
     if date:
         try:
@@ -555,7 +583,8 @@ async def private_message(message: Message, state: FSMContext):
             await message.answer("Неправильний формат дати. Використовуйте формат ДД.ММ.РРРР.")
             return
 
-    assignee_asana_id = get_asana_id_by_tg_id(message.from_user.id)
+    assignee_asana_id = get_asana_id_by_username(assignees[0]) if assignees else get_asana_id_by_tg_id(
+        message.from_user.id)
 
     body = {
         "data": {
