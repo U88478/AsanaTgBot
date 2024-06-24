@@ -47,7 +47,7 @@ def parse_message(text):
 
 
 def parse_command(text):
-    command_pattern = r"^(complete|duetoday|link)"
+    command_pattern = r"^(complete|duetoday|link|stickers)"
     command_match = re.match(command_pattern, text.strip())
     return command_match.group(1) if command_match else None
 
@@ -62,6 +62,3 @@ def parse_message_complete(text: str):
         data["task_name"] = "Untitled Task"
     data["command"] = command
     return data
-
-
-print(parse_message_complete("/link"))

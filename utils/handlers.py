@@ -9,6 +9,7 @@ from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKey
     InlineKeyboardMarkup
 
 from bot.bot_instance import bot
+from help_command import process_help_command
 from utils.asana_functions import *
 from utils.config import *
 from utils.parse_message import parse_message_complete
@@ -179,8 +180,7 @@ async def delete_command(message: Message):
             await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
 
 
-@router.message(Command("stickers"))
-async def stickers_command(message: Message):
+async def process_stickers_command(message: Message):
     settings = get_default_settings(message.chat.id)
     if settings:
         toggle_stickers(message.chat.id)
@@ -317,7 +317,7 @@ async def asana_command(message: Message, state: FSMContext):
             else:
                 await message.answer("Наразі немає доступних задач.")
 
-        elif command == "duetoday":
+        if command == "duetoday":
             user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
             if not user_tasks_dict:
                 await message.answer("На сьогодні задач немає.")
@@ -327,7 +327,13 @@ async def asana_command(message: Message, state: FSMContext):
                 [f"🔸 {task['name']}" for task in user_tasks_dict.values()])
             await message.answer(answer_text)
 
-        elif command == "link":
+        if command == "help":
+            await process_help_command(message)
+
+        if command == "stickers":
+            await process_stickers_command(message)
+
+        if command == "link":
             await process_link_command(message, state)
 
         return
@@ -571,7 +577,7 @@ async def private_message(message: Message, state: FSMContext):
             else:
                 await message.answer("Наразі немає доступних задач.")
 
-        elif command == "duetoday":
+        if command == "duetoday":
             user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
             if not user_tasks_dict:
                 await message.answer("На сьогодні задач немає.")
@@ -581,7 +587,13 @@ async def private_message(message: Message, state: FSMContext):
                 [f"🔸 {task['name']}" for task in user_tasks_dict.values()])
             await message.answer(answer_text)
 
-        elif command == "link":
+        if command == "help":
+            await process_help_command(message)
+
+        if command == "stickers":
+            await process_stickers_command(message)
+
+        if command == "link":
             await process_link_command(message, state)
 
         return
