@@ -53,7 +53,7 @@ def parse_command(text):
 
 
 def parse_message_complete(text: str):
-    text = text.replace("/asana ", "").strip()
+    text = text.replace("/", "", 1).replace("asana ", "").strip()
     command = parse_command(text)
     if command:
         text = text.replace(command, "", 1).strip()
@@ -63,3 +63,5 @@ def parse_message_complete(text: str):
     data["command"] = command
     return data
 
+
+print(parse_message_complete("/link"))

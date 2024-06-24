@@ -138,6 +138,17 @@ class TestHandlers(unittest.TestCase):
         }
         self.assertEqual(parse_message_complete(text), expected_output)
 
+    def test_parse_command_complete_no_prefix(self):
+        text = "/complete"
+        expected_output = {
+            "task_name": "Untitled Task",
+            "description": "",
+            "date": None,
+            "assignees": [],
+            "command": "complete"
+        }
+        self.assertEqual(parse_message_complete(text), expected_output)
+
     def test_parse_command_duetoday(self):
         text = "/asana duetoday"
         expected_output = {
@@ -149,8 +160,30 @@ class TestHandlers(unittest.TestCase):
         }
         self.assertEqual(parse_message_complete(text), expected_output)
 
+    def test_parse_command_duetoday_no_prefix(self):
+        text = "/duetoday"
+        expected_output = {
+            "task_name": "Untitled Task",
+            "description": "",
+            "date": None,
+            "assignees": [],
+            "command": "duetoday"
+        }
+        self.assertEqual(parse_message_complete(text), expected_output)
+
     def test_parse_command_link(self):
         text = "/asana link"
+        expected_output = {
+            "task_name": "Untitled Task",
+            "description": "",
+            "date": None,
+            "assignees": [],
+            "command": "link"
+        }
+        self.assertEqual(parse_message_complete(text), expected_output)
+
+    def test_parse_command_link_no_prefix(self):
+        text = "/link"
         expected_output = {
             "task_name": "Untitled Task",
             "description": "",
