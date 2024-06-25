@@ -85,6 +85,10 @@ async def process_token(message: Message, state: FSMContext) -> None:
         await state.clear()
         asana_client = get_asana_client(message.from_user.id)
         workspaces_generator = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
+
+        # Add debugging statements
+        logging.info(f"Workspaces generator: {workspaces_generator}")
+
         workspaces = {workspace['gid']: workspace['name'] for workspace in workspaces_generator}
 
         if len(workspaces) == 1:
@@ -103,7 +107,10 @@ async def process_token(message: Message, state: FSMContext) -> None:
         await state.set_state(DefaultSettingsPrivate.workspace)
         await state.update_data(new_user=new_user)
 
-        workspace_buttons = [KeyboardButton(text=workspace['name']) for workspace in workspaces]
+        # Debugging statement for workspaces
+        logging.info(f"Workspaces: {workspaces}")
+
+        workspace_buttons = [KeyboardButton(text=workspace) for workspace in workspaces.values()]
         keyboard = ReplyKeyboardMarkup(
             keyboard=[workspace_buttons],
             resize_keyboard=True,
@@ -116,7 +123,6 @@ async def process_token(message: Message, state: FSMContext) -> None:
         await message.reply("Трясця! Щось пішло не так.\n\nЦе не схоже на токен, спробуйте ще раз")
 
 
-@router.message(DefaultSettingsPrivate.workspace)
 async def select_workspace_private(message: Message, state: FSMContext):
     workspace_name = message.text
     asana_client = get_asana_client(message.from_user.id)
