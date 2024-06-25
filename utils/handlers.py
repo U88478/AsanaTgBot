@@ -39,7 +39,7 @@ async def start(message: Message, state: FSMContext) -> None:
     reply_keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [
-                KeyboardButton(text="Вийти")
+                KeyboardButton(text="Скасувавти")
             ]
         ],
         resize_keyboard=True,
@@ -69,9 +69,10 @@ async def start(message: Message, state: FSMContext) -> None:
 @router.message(Authorization.token)
 async def process_token(message: Message, state: FSMContext) -> None:
     new_user = False
-    if message.text == "Вийти":
+    if message.text == "Скасувавти":
         await state.clear()
         await message.answer("Авторизація скасована.", reply_markup=ReplyKeyboardRemove())
+        return
     elif is_valid_token_format(message.text):
         token, refresh_token = decrypt_tokens(key, message.text)
         asana_id = get_asana_id(token)
@@ -85,10 +86,6 @@ async def process_token(message: Message, state: FSMContext) -> None:
         await state.clear()
         asana_client = get_asana_client(message.from_user.id)
         workspaces_generator = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
-
-        # Add debugging statements
-        logging.info(f"Workspaces generator: {workspaces_generator}")
-
         workspaces = {workspace['gid']: workspace['name'] for workspace in workspaces_generator}
 
         if len(workspaces) == 1:
@@ -107,10 +104,8 @@ async def process_token(message: Message, state: FSMContext) -> None:
         await state.set_state(DefaultSettingsPrivate.workspace)
         await state.update_data(new_user=new_user)
 
-        # Debugging statement for workspaces
-        logging.info(f"Workspaces: {workspaces}")
-
         workspace_buttons = [KeyboardButton(text=workspace) for workspace in workspaces.values()]
+        workspace_buttons.append(KeyboardButton(text="Скасувати"))
         keyboard = ReplyKeyboardMarkup(
             keyboard=[workspace_buttons],
             resize_keyboard=True,
@@ -123,10 +118,15 @@ async def process_token(message: Message, state: FSMContext) -> None:
         await message.reply("Трясця! Щось пішло не так.\n\nЦе не схоже на токен, спробуйте ще раз")
 
 
+@router.message(StateFilter(DefaultSettingsPrivate.workspace))
 async def select_workspace_private(message: Message, state: FSMContext):
     workspace_name = message.text
-    asana_client = get_asana_client(message.from_user.id)
+    if workspace_name == "Скасувати":
+        await state.clear()
+        await message.answer("Дія скасована.", reply_markup=ReplyKeyboardRemove())
+        return
 
+    asana_client = get_asana_client(message.from_user.id)
     workspaces = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
     workspace_id = next((workspace['gid'] for workspace in workspaces if workspace['name'] == workspace_name), None)
 
