@@ -1,3 +1,5 @@
+from aiogram.types import Message
+
 commands_list = """
 📋 **Available Commands:**
 
