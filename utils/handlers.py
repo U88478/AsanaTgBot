@@ -512,8 +512,10 @@ async def handle_task_report(message: Message, state: FSMContext):
     new_notes = f"{existing_notes}\n\n{message.from_user.username} здав задачу {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}:\n{report_text}"
 
     body = {
-        "notes": new_notes,
-        "completed": True
+        "data": {
+            "notes": new_notes,
+            "completed": True
+        }
     }
 
     try:
