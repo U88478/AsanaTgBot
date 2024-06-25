@@ -143,6 +143,8 @@ async def select_workspace_private(message: Message, state: FSMContext):
                                  f"та закривати задачі з розділу “Мої задачі“ прямо з цього чату або "
                                  f"додати бота у чат команди та керувати задачами спільного проекту.")
 
+    await state.clear()
+
 
 @router.message(Command("stop"), is_private)
 async def revoke_asana_token(message: Message):
