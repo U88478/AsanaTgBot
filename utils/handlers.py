@@ -9,9 +9,9 @@ from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKey
     InlineKeyboardMarkup
 
 from bot.bot_instance import bot
-from utils.help_command import process_help_command
 from utils.asana_functions import *
 from utils.config import *
+from utils.help_command import process_help_command
 from utils.parse_message import parse_message_complete
 from utils.refresh_token_wrap import refresh_token
 from utils.settings_decorator import check_settings
@@ -298,7 +298,7 @@ async def asana_command(message: Message, state: FSMContext):
         print(f"Command detected: {command}")  # Debugging print
 
         if command == "complete":
-            user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
+            user_tasks_dict = get_all_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
             if not user_tasks_dict:
                 await message.answer("На сьогодні задач немає.")
                 return
@@ -378,6 +378,32 @@ async def asana_command(message: Message, state: FSMContext):
         await message.answer(f"Помилка при створенні задачі: {e}")
 
 
+# отримує ввсі задачі, незалежно від дати або її відсутності
+def get_all_tasks_for_user_in_workspace(user_id, project_id):
+    user = get_user(user_id)
+    asana_client = get_asana_client(user_id)
+    tasks_api_instance = asana.TasksApi(asana_client)
+    user_gid = get_asana_id_by_username(user.tg_username)
+    user_tasks_dict = {}
+
+    try:
+        opts = {
+            'completed_since': "now",
+            'opt_fields': "name, assignee"
+        }
+        tasks = tasks_api_instance.get_tasks_for_project(project_id, opts)
+        for task in tasks:
+            if task['assignee'] and task['assignee']['gid'] == user_gid:
+                user_tasks_dict[task['gid']] = {
+                    'name': task['name'],
+                    'assignee_gid': task['assignee']['gid'],
+                }
+    except ApiException as e:
+        logging.error(f"Error getting tasks for user {user_id}: {e}")
+
+    return user_tasks_dict
+
+
 # Функція для отримання задач на сьогодні
 def get_todays_tasks_for_user_in_workspace(user_id, project_id):
     user = get_user(user_id)
@@ -394,7 +420,8 @@ def get_todays_tasks_for_user_in_workspace(user_id, project_id):
         }
         tasks = tasks_api_instance.get_tasks_for_project(project_id, opts)
         for task in tasks:
-            if 'due_on' in task and task['due_on'] == today and task['assignee'] and task['assignee']['gid'] == user_gid:
+            if 'due_on' in task and task['due_on'] == today and task['assignee'] and task['assignee'][
+                'gid'] == user_gid:
                 user_tasks_dict[task['gid']] = {
                     'name': task['name'],
                     'assignee_gid': task['assignee']['gid'],
@@ -403,6 +430,7 @@ def get_todays_tasks_for_user_in_workspace(user_id, project_id):
         logging.error(f"Error getting tasks for user {user_id}: {e}")
 
     return user_tasks_dict
+
 
 @router.message(StateFilter(ReportTask.TaskName))
 async def handle_task_selection(message: Message, state: FSMContext):
@@ -548,7 +576,7 @@ async def private_message(message: Message, state: FSMContext):
         print(f"Command detected: {command}")  # Debugging print
 
         if command == "complete":
-            user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
+            user_tasks_dict = get_all_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
             if not user_tasks_dict:
                 await message.answer("На сьогодні задач немає.")
                 return
