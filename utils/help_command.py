@@ -15,7 +15,7 @@ commands_list = """
      - **Task Name** - The first part of the message, excluding date and assignees, is treated as the task name.
      - **до dd.mm.yyyy** - Specify a due date.
      - **`@assignee_telegram_username`** - Assign the task to a user.
-     - **Description** - Anything after a newline character (\n) is considered the task description.
+     - **Description** - Anything after a newline character (\\n) is considered the task description.
    *General Example:* 
      - `Task Name до 25.12.2024 @user1 @user2\nTask description.`
      - `Buy groceries до 15.07.2024 @john_doe\nRemember to buy milk and bread.`
@@ -30,7 +30,7 @@ commands_list = """
 
 🔹 **/asana link** - Set default workspace.
    *Usage:* `/asana link`
-   *Explanation:* This command guides you through setting the default workspace where new tasks are created.
+   *Explanation:* This command guides you through setting the default workspace where new tasks will be created.
 
 🔹 **/asana help** - Show this help message.
    *Usage:* `/asana help`
@@ -38,7 +38,7 @@ commands_list = """
 
 🔹 **/asana stickers** - Toggle stickers on and off.
    *Usage:* `/asana stickers`
-   *Explanation:* This command toggles the use of stickers on or off.
+   *Explanation:* This command toggles the use of stickers by bot.
 
 📝 **Private Message Specific Commands:**
 
