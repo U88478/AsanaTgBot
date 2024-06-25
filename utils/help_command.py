@@ -55,4 +55,4 @@ commands_list = """
 
 
 async def process_help_command(message: Message):
-    await message.answer(commands_list)
+    await message.answer(commands_list, parse_mode="Markdown")
