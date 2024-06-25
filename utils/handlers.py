@@ -202,6 +202,7 @@ async def process_link_command(message: Message, state: FSMContext) -> None:
     asana_client = get_asana_client(message.from_user.id)
     workspaces = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
     workspace_buttons = [KeyboardButton(text=workspace['name']) for workspace in workspaces]
+    workspace_buttons.append(KeyboardButton(text="Скасувати"))
     keyboard = ReplyKeyboardMarkup(
         keyboard=[workspace_buttons],
         resize_keyboard=True,
@@ -213,6 +214,11 @@ async def process_link_command(message: Message, state: FSMContext) -> None:
 
 @router.message(StateFilter(DefaultSettings.workspace))
 async def select_project(message: Message, state: FSMContext) -> None:
+    if message.text == "Скасувати":
+        await state.clear()
+        await message.answer("Дія скасована. Попередні налаштування збережено.", reply_markup=ReplyKeyboardRemove())
+        return
+
     workspace_name = message.text
     asana_client = get_asana_client(message.from_user.id)
 
@@ -223,6 +229,7 @@ async def select_project(message: Message, state: FSMContext) -> None:
 
     projects = asana.ProjectsApi(asana_client).get_projects({'workspace': workspace_id, 'opt_fields': 'name'})
     project_buttons = [[KeyboardButton(text=project['name'])] for project in projects]
+    project_buttons.append([KeyboardButton(text="Скасувати")])
     keyboard = ReplyKeyboardMarkup(
         keyboard=project_buttons,
         resize_keyboard=True,
@@ -235,6 +242,11 @@ async def select_project(message: Message, state: FSMContext) -> None:
 
 @router.message(StateFilter(DefaultSettings.project))
 async def select_section(message: Message, state: FSMContext) -> None:
+    if message.text == "Скасувати":
+        await state.clear()
+        await message.answer("Дія скасована. Попередні налаштування збережено.", reply_markup=ReplyKeyboardRemove())
+        return
+
     project_name = message.text
     data = await state.get_data()
     workspace_id = data['workspace_id']
@@ -248,6 +260,7 @@ async def select_section(message: Message, state: FSMContext) -> None:
 
     sections = asana.SectionsApi(asana_client).get_sections_for_project(project_id, {'opt_fields': 'name'})
     section_buttons = [[KeyboardButton(text=section['name'])] for section in sections]
+    section_buttons.append([KeyboardButton(text="Скасувати")])
     keyboard = ReplyKeyboardMarkup(
         keyboard=section_buttons,
         resize_keyboard=True,
@@ -260,6 +273,11 @@ async def select_section(message: Message, state: FSMContext) -> None:
 
 @router.message(StateFilter(DefaultSettings.section))
 async def save_settings(message: Message, state: FSMContext) -> None:
+    if message.text == "Скасувати":
+        await state.clear()
+        await message.answer("Дія скасована. Попередні налаштування збережено.", reply_markup=ReplyKeyboardRemove())
+        return
+
     data = await state.get_data()
     workspace_name = data['workspace_name']
     workspace_id = data['workspace_id']
@@ -289,6 +307,39 @@ async def save_settings(message: Message, state: FSMContext) -> None:
     await state.clear()
 
 
+async def process_duetoday_command(message: Message, user_id: int, project_id: str):
+    user_tasks_dict = get_todays_tasks_for_user_in_workspace(user_id, project_id)
+    if not user_tasks_dict:
+        await message.answer("На сьогодні задач немає.")
+        return
+
+    answer_text = "Завдання на сьогодні:\n" + "\n".join(
+        [f"🔸 {task['name']}" for task in user_tasks_dict.values()])
+    await message.answer(answer_text)
+
+
+async def process_complete_command(message: Message, state: FSMContext, user_id: int, project_id: str):
+    user_tasks_dict = get_all_tasks_for_user_in_workspace(user_id, project_id)
+    if not user_tasks_dict:
+        await message.answer("На сьогодні задач немає.")
+        return
+
+    task_buttons = [[KeyboardButton(text=task['name'])] for task in user_tasks_dict.values()]
+    task_buttons.append([KeyboardButton(text="Скасувати")])
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=task_buttons,
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+
+    if task_buttons:
+        await message.answer("Оберіть задачу, яку бажаєте здати:", reply_markup=keyboard)
+        await state.set_state(ReportTask.TaskName)
+        await state.update_data(user_tasks_dict=user_tasks_dict)
+    else:
+        await message.answer("Наразі немає доступних задач.")
+
+
 @router.message(Command("asana"))
 @refresh_token
 @check_settings
@@ -304,34 +355,10 @@ async def asana_command(message: Message, state: FSMContext):
         print(f"Command detected: {command}")  # Debugging print
 
         if command == "complete":
-            user_tasks_dict = get_all_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
-            if not user_tasks_dict:
-                await message.answer("На сьогодні задач немає.")
-                return
-
-            task_buttons = [[KeyboardButton(text=task['name'])] for task in user_tasks_dict.values()]
-            keyboard = ReplyKeyboardMarkup(
-                keyboard=task_buttons,
-                resize_keyboard=True,
-                one_time_keyboard=True
-            )
-
-            if task_buttons:
-                await message.answer("Оберіть задачу, яку бажаєте здати:", reply_markup=keyboard)
-                await state.set_state(ReportTask.TaskName)
-                await state.update_data(user_tasks_dict=user_tasks_dict)
-            else:
-                await message.answer("Наразі немає доступних задач.")
+            await process_complete_command(message, state, message.from_user.id, settings.project_id)
 
         if command == "duetoday":
-            user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
-            if not user_tasks_dict:
-                await message.answer("На сьогодні задач немає.")
-                return
-
-            answer_text = "Завдання на сьогодні:\n" + "\n".join(
-                [f"🔸 {task['name']}" for task in user_tasks_dict.values()])
-            await message.answer(answer_text)
+            await process_duetoday_command(message, message.from_user.id, settings.project_id)
 
         if command == "help":
             await process_help_command(message)
@@ -449,7 +476,7 @@ async def handle_task_selection(message: Message, state: FSMContext):
     for task_gid, task_info in user_tasks_dict.items():
         if task_info['name'] == selected_task_name:
             task_found = True
-            await message.answer(f"Report: ")
+            await message.answer("Будь ласка, надайте звіт:")
             await state.update_data(task_gid=task_gid)
             await state.set_state(ReportTask.Report)
             break
@@ -459,27 +486,33 @@ async def handle_task_selection(message: Message, state: FSMContext):
 
 
 @router.message(StateFilter(ReportTask.Report))
-async def handle_task_selection(message: Message, state: FSMContext):
+async def handle_task_report(message: Message, state: FSMContext):
+    if message.text == "Скасувати":
+        await state.clear()
+        await message.answer("Дія скасована. Попередні налаштування збережено.", reply_markup=ReplyKeyboardRemove())
+        return
+
     report_text = message.text
     data = await state.get_data()
     task_gid = data['task_gid']
     asana_client = get_asana_client(message.from_user.id)
     tasks_api_instance = asana.TasksApi(asana_client)
 
+    # Get the existing task details
+    task = tasks_api_instance.get_task(task_gid, {"opt_fields": "notes"})
+    existing_notes = task['notes'] if 'notes' in task else ""
+
+    # Append the new report to the existing notes
+    new_notes = f"{existing_notes}\n\n{message.from_user.username} здав задачу {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}:\n{report_text}"
+
     body = {
-        "data": {
-            "completed": True,
-            "notes": report_text
-        }
-    }
-
-    opts = {
-
+        "notes": new_notes,
+        "completed": True
     }
 
     try:
-        tasks_api_instance.update_task(body, task_gid, opts)
-        await message.answer(f"Звіт здано", reply_markup=ReplyKeyboardRemove())
+        tasks_api_instance.update_task(body, task_gid, {})
+        await message.answer("Звіт здано", reply_markup=ReplyKeyboardRemove())
         settings = get_default_settings(message.chat.id)
         if settings.toggle_stickers:
             await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
@@ -582,34 +615,10 @@ async def private_message(message: Message, state: FSMContext):
         print(f"Command detected: {command}")  # Debugging print
 
         if command == "complete":
-            user_tasks_dict = get_all_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
-            if not user_tasks_dict:
-                await message.answer("На сьогодні задач немає.")
-                return
-
-            task_buttons = [[KeyboardButton(text=task['name'])] for task in user_tasks_dict.values()]
-            keyboard = ReplyKeyboardMarkup(
-                keyboard=task_buttons,
-                resize_keyboard=True,
-                one_time_keyboard=True
-            )
-
-            if task_buttons:
-                await message.answer("Оберіть задачу, яку бажаєте здати:", reply_markup=keyboard)
-                await state.set_state(ReportTask.TaskName)
-                await state.update_data(user_tasks_dict=user_tasks_dict)
-            else:
-                await message.answer("Наразі немає доступних задач.")
+            await process_complete_command(message, state, message.from_user.id, settings.project_id)
 
         if command == "duetoday":
-            user_tasks_dict = get_todays_tasks_for_user_in_workspace(message.from_user.id, settings.project_id)
-            if not user_tasks_dict:
-                await message.answer("На сьогодні задач немає.")
-                return
-
-            answer_text = "Завдання на сьогодні:\n" + "\n".join(
-                [f"🔸 {task['name']}" for task in user_tasks_dict.values()])
-            await message.answer(answer_text)
+            await process_duetoday_command(message, message.from_user.id, settings.project_id)
 
         if command == "help":
             await process_help_command(message)
