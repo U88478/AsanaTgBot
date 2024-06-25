@@ -387,32 +387,22 @@ def get_todays_tasks_for_user_in_workspace(user_id, project_id):
     user_tasks_dict = {}
 
     try:
+        today = datetime.date.today().isoformat()
         opts = {
             'completed_since': "now",
-            'opt_fields': "assignee"
+            'opt_fields': "name, assignee, due_on"
         }
         tasks = tasks_api_instance.get_tasks_for_project(project_id, opts)
-        tasks_dict = {}
-        opts = {
-            'opt_fields': "name, assignee"
-        }
         for task in tasks:
-            task = tasks_api_instance.get_task(task['gid'], opts)
-            task_info = {
-                'name': task['name'],
-                'assignee_gid': task['assignee']['gid'] if task['assignee'] else None,
-            }
-            tasks_dict[task['gid']] = task_info
-        for task in tasks_dict:
-            if tasks_dict[task]['assignee_gid'] == user_gid:
-                user_tasks_dict[task] = tasks_dict[task]
-
-
+            if 'due_on' in task and task['due_on'] == today and task['assignee'] and task['assignee']['gid'] == user_gid:
+                user_tasks_dict[task['gid']] = {
+                    'name': task['name'],
+                    'assignee_gid': task['assignee']['gid'],
+                }
     except ApiException as e:
         logging.error(f"Error getting tasks for user {user_id}: {e}")
 
     return user_tasks_dict
-
 
 @router.message(StateFilter(ReportTask.TaskName))
 async def handle_task_selection(message: Message, state: FSMContext):
