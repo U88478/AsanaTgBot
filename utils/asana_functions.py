@@ -1,6 +1,6 @@
 import asana
-from asana.rest import ApiException
 import requests
+from asana.rest import ApiException
 
 from db.functions import *
 from utils.config import *
@@ -34,14 +34,27 @@ def get_asana_client(tg_id):
         return asana_client
     except ApiException as e:
         if e.status == 401:
-            # Оновлення токена
-            new_access_token, new_refresh_token = refresh_access_token(user.asana_refresh_token)
-            # Оновлення даних користувача
-            create_user(tg_id, user.tg_first_name, user.tg_username, new_access_token, new_refresh_token,
+            try:
+                # Attempt to refresh the token
+                new_access_token, new_refresh_token = refresh_access_token(user.asana_refresh_token)
+                if new_access_token and new_refresh_token:
+                    # Update user data
+                    create_user(tg_id, user.tg_first_name, user.tg_username, new_access_token, new_refresh_token,
                                 user.asana_id)
-            # Повторне створення клієнта Asana з новим токеном
-            configuration.access_token = new_access_token
-            return asana.ApiClient(configuration)
+                    # Recreate Asana client with new token
+                    configuration.access_token = new_access_token
+                    return asana.ApiClient(configuration)
+                else:
+                    # If refresh tokens are None, it means the user has revoked access
+                    create_user(tg_id, user.tg_first_name, user.tg_username, None, None, user.asana_id)
+                    return None
+            except ApiException as refresh_exception:
+                if refresh_exception.status == 401:
+                    # User has revoked authorization
+                    create_user(tg_id, user.tg_first_name, user.tg_username, None, None, user.asana_id)
+                    return None
+                else:
+                    raise refresh_exception
         else:
             raise e
 
