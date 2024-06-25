@@ -69,13 +69,23 @@ async def start(message: Message, state: FSMContext) -> None:
 @router.message(Authorization.token)
 async def process_token(message: Message, state: FSMContext) -> None:
     new_user = False
-    if message.text == "Скасувавти":
+    if message.text == "Скасувати":
         await state.clear()
         await message.answer("Авторизація скасована.", reply_markup=ReplyKeyboardRemove())
         return
     elif is_valid_token_format(message.text):
         token, refresh_token = decrypt_tokens(key, message.text)
-        asana_id = get_asana_id(token)
+        asana_client = asana.Client.access_token(token)
+        users_api_instance = asana.UsersApi(asana_client)
+
+        # Check if the token is valid by calling users/me endpoint
+        try:
+            user_info = users_api_instance.get_user("me", {})
+        except asana.error.InvalidRequestError:
+            await message.reply("Неправильний токен, спробуйте ще раз.")
+            return
+
+        asana_id = user_info['gid']
         user = get_user(message.from_user.id)
         if not user:
             new_user = True
@@ -84,7 +94,6 @@ async def process_token(message: Message, state: FSMContext) -> None:
         await message.answer(f"Ви успішно авторизувалися!", reply_markup=ReplyKeyboardRemove())
 
         await state.clear()
-        asana_client = get_asana_client(message.from_user.id)
         workspaces_generator = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
         workspaces = {workspace['gid']: workspace['name'] for workspace in workspaces_generator}
 
