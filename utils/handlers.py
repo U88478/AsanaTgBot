@@ -75,7 +75,7 @@ async def process_token(message: Message, state: FSMContext) -> None:
         return
     elif is_valid_token_format(message.text):
         token, refresh_token = decrypt_tokens(key, message.text)
-        asana_client = asana.Client.access_token(token)
+        asana_client = get_asana_client(message.from_user.id)
         users_api_instance = asana.UsersApi(asana_client)
 
         # Check if the token is valid by calling users/me endpoint

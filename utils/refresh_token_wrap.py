@@ -15,7 +15,6 @@ def refresh_token(func):
             return
 
         asana_client = get_asana_client(message.from_user.id)
-        asana_client = get_asana_client(message.from_user.id)
         users_api_instance = asana.UsersApi(asana_client)
         opts = {
 
