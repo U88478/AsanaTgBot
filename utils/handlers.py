@@ -469,6 +469,12 @@ def get_todays_tasks_for_user_in_workspace(user_id, project_id):
 async def handle_task_selection(message: Message, state: FSMContext):
     selected_task_name = message.text
     data = await state.get_data()
+
+    if selected_task_name == "Скасувати":
+        await state.clear()
+        await message.answer("Дія скасована.", reply_markup=ReplyKeyboardRemove())
+        return
+
     user_tasks_dict = data['user_tasks_dict']
 
     # Перевіряємо, чи вибрана задача є в списку задач
@@ -489,7 +495,7 @@ async def handle_task_selection(message: Message, state: FSMContext):
 async def handle_task_report(message: Message, state: FSMContext):
     if message.text == "Скасувати":
         await state.clear()
-        await message.answer("Дія скасована. Попередні налаштування збережено.", reply_markup=ReplyKeyboardRemove())
+        await message.answer("Дія скасована.", reply_markup=ReplyKeyboardRemove())
         return
 
     report_text = message.text
