@@ -509,7 +509,7 @@ async def handle_task_report(message: Message, state: FSMContext):
     existing_notes = task['notes'] if 'notes' in task else ""
 
     # Append the new report to the existing notes
-    new_notes = f"{existing_notes}\n\n{message.from_user.username} здав задачу {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}:\n{report_text}"
+    new_notes = f"{existing_notes}\n\n\n\n@{message.from_user.username} здав задачу {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}:\n{report_text}"
 
     body = {
         "data": {
