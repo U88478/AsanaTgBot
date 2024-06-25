@@ -9,7 +9,7 @@ from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKey
     InlineKeyboardMarkup
 
 from bot.bot_instance import bot
-from help_command import process_help_command
+from utils.help_command import process_help_command
 from utils.asana_functions import *
 from utils.config import *
 from utils.parse_message import parse_message_complete
