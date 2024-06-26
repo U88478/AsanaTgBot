@@ -20,13 +20,18 @@ def get_asana_id(asana_token):
     return asana_id
 
 
-def get_asana_client(user_id):
+def get_asana_client(user_id, token=None):
     user = get_user(user_id)
-    if not user or not user.asana_token:
+    if not user:
         return None
 
+    if token:
+        access_token = token
+    else:
+        access_token = user.asana_token
+
     configuration = asana.Configuration()
-    configuration.access_token = user.asana_token
+    configuration.access_token = access_token
     asana_client = asana.ApiClient(configuration)
 
     try:
@@ -35,7 +40,7 @@ def get_asana_client(user_id):
         # If the token is valid, return the Asana client
         return asana_client
     except asana.rest.ApiException as e:
-        if e.status == 401:  # Unauthorized, token may be expired or revoked
+        if e.status == 401 and not token:  # Unauthorized, token may be expired or revoked
             try:
                 new_access_token, new_refresh_token = refresh_access_token(user.asana_refresh_token)
                 # Update user's token in the database

@@ -81,7 +81,7 @@ async def process_token(message: Message, state: FSMContext) -> None:
             await message.reply("Невірний токен. Будь ласка, спробуйте ще раз.")
             return
 
-        asana_client = get_asana_client(message.from_user.id)
+        asana_client = get_asana_client(message.from_user.id, token)
         if not asana_client:
             await message.reply("Не вдалося підключитися до Asana. Будь ласка, перевірте ваш токен.")
             return
