@@ -20,41 +20,33 @@ def get_asana_id(asana_token):
     return asana_id
 
 
-def get_asana_client(tg_id):
-    user = get_user(tg_id)
-    if user is None:
+def get_asana_client(user_id):
+    user = get_user(user_id)
+    if not user or not user.asana_token:
         return None
 
+    configuration = asana.Configuration()
+    configuration.access_token = user.asana_token
+    asana_client = asana.ApiClient(configuration)
+
     try:
-        configuration = asana.Configuration()
-        configuration.access_token = user.asana_token
-        asana_client = asana.ApiClient(configuration)
+        # Test the token by making a simple API call
         workspaces = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
-        _ = {workspace['name']: workspace['gid'] for workspace in workspaces}
+        # If the token is valid, return the Asana client
         return asana_client
-    except ApiException as e:
-        if e.status == 401:
+    except asana.rest.ApiException as e:
+        if e.status == 401:  # Unauthorized, token may be expired or revoked
             try:
-                # Attempt to refresh the token
                 new_access_token, new_refresh_token = refresh_access_token(user.asana_refresh_token)
-                if new_access_token and new_refresh_token:
-                    # Update user data
-                    create_user(tg_id, user.tg_first_name, user.tg_username, new_access_token, new_refresh_token,
-                                user.asana_id)
-                    # Recreate Asana client with new token
-                    configuration.access_token = new_access_token
-                    return asana.ApiClient(configuration)
-                else:
-                    # If refresh tokens are None, it means the user has revoked access
-                    create_user(tg_id, user.tg_first_name, user.tg_username, None, None, user.asana_id)
-                    return None
-            except ApiException as refresh_exception:
-                if refresh_exception.status == 401:
-                    # User has revoked authorization
-                    create_user(tg_id, user.tg_first_name, user.tg_username, None, None, user.asana_id)
-                    return None
-                else:
-                    raise refresh_exception
+                # Update user's token in the database
+                update_user_token(user_id, new_access_token, new_refresh_token)
+                configuration.access_token = new_access_token
+                asana_client = asana.ApiClient(configuration)
+                # Test the new token by making a simple API call
+                workspaces = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
+                return asana_client
+            except Exception as e:
+                raise Exception(f"Не вдалося оновити токен: {e}")
         else:
             raise e
 
