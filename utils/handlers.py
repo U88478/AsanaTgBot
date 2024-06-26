@@ -94,8 +94,16 @@ async def process_token(message: Message, state: FSMContext) -> None:
             await message.reply("Не вдалося підключитися до Asana. Будь ласка, перевірте ваш токен.")
             return
 
-        workspaces_generator = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
-        workspaces = {workspace['gid']: workspace['name'] for workspace in workspaces_generator}
+        try:
+            workspaces_generator = asana.WorkspacesApi(asana_client).get_workspaces({'opt_fields': 'name'})
+            workspaces = {workspace['gid']: workspace['name'] for workspace in workspaces_generator}
+        except asana.rest.ApiException as e:
+            if e.status == 401:
+                await message.reply("Токен не дійсний або був відкликаний. Будь ласка, авторизуйтесь знову.")
+                return
+            else:
+                await message.reply(f"Сталася помилка при отриманні робочих просторів: {e}")
+                return
 
         if len(workspaces) == 1:
             workspace_gid, workspace_name = next(iter(workspaces.items()))
