@@ -10,7 +10,7 @@ commands_list = """
 🔹 **/asana** - Main command to interact with Asana tasks.
    *Usage:* `/asana [task details]`
    *Explanation:* This command creates a task in Asana with the provided details.
-   **Possible information: Task Name, Date, Assignees, Description**
+   **Possible information:** Task Name, Date, Assignees, Description
    *Formats:*
      - **Task Name** - The first part of the message, excluding date and assignees, is treated as the task name.
      - **до dd.mm.yyyy** - Specify a due date.
