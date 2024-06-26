@@ -69,6 +69,7 @@ async def start(message: Message, state: FSMContext) -> None:
 @router.message(Authorization.token)
 async def process_token(message: Message, state: FSMContext) -> None:
     new_user = False
+    print(message.text)
     if message.text == "Скасувати":
         await state.clear()
         await message.answer("Авторизація скасована.", reply_markup=ReplyKeyboardRemove())
