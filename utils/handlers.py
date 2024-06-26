@@ -81,14 +81,6 @@ async def process_token(message: Message, state: FSMContext) -> None:
             await message.reply("Невірний токен. Будь ласка, спробуйте ще раз.")
             return
 
-        user = get_user(message.from_user.id)
-        if not user:
-            new_user = True
-        create_user(message.from_user.id, message.from_user.first_name, message.from_user.username, token,
-                    refresh_token, asana_id)
-        await message.answer(f"Ви успішно авторизувалися!", reply_markup=ReplyKeyboardRemove())
-
-        await state.clear()
         asana_client = get_asana_client(message.from_user.id)
         if not asana_client:
             await message.reply("Не вдалося підключитися до Asana. Будь ласка, перевірте ваш токен.")
@@ -104,6 +96,15 @@ async def process_token(message: Message, state: FSMContext) -> None:
             else:
                 await message.reply(f"Сталася помилка при отриманні робочих просторів: {e}")
                 return
+
+        user = get_user(message.from_user.id)
+        if not user:
+            new_user = True
+        create_user(message.from_user.id, message.from_user.first_name, message.from_user.username, token,
+                    refresh_token, asana_id)
+        await message.answer(f"Ви успішно авторизувалися!", reply_markup=ReplyKeyboardRemove())
+
+        await state.clear()
 
         if len(workspaces) == 1:
             workspace_gid, workspace_name = next(iter(workspaces.items()))
