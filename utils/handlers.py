@@ -151,7 +151,7 @@ async def select_workspace_private(message: Message, state: FSMContext):
     settings = create_default_settings_private(message.chat.id, workspace_id, workspace_name, message.from_user.id)
 
     if settings:
-        await message.answer(f"Ваш воркспейс за замовченням - “{workspace_name}”.")
+        await message.answer(f"Ваш робочий простір за замовченням - “{workspace_name}”.")
 
         data = await state.get_data()
         new_user = data['new_user']

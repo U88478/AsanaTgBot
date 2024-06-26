@@ -1,58 +1,58 @@
 from aiogram.types import Message
 
-commands_list = """
-📋 **Available Commands:**
+commands_list_ukrainian = """
+📋 **Доступні команди:**
 
-🔹 **/start** - Start the bot and get initial instructions. Works only in private messages with the bot.
-   *Usage:* `/start`
-   *Explanation:* This command initiates interaction with the bot and provides initial setup instructions.
+🔹 **/start** - Запустіть бота та отримайте початкові інструкції. Працює тільки в приватних повідомленнях з ботом.
+   *Використання:* `/start`
+   *Пояснення:* Ця команда ініціює взаємодію з ботом і надає початкові інструкції по налаштуванню.
 
-🔹 **/asana** - Main command to interact with Asana tasks.
-   *Usage:* `/asana [task details]`
-   *Explanation:* This command creates a task in Asana with the provided details.
-   **Possible information:** Task Name, Date, Assignees, Description
-   *Formats:*
-     - **Task Name** - The first part of the message, excluding date and assignees, is treated as the task name.
-     - **до dd.mm.yyyy** - Specify a due date.
-     - **`@assignee_telegram_username`** - Assign the task to a user.
-     - **Description** - Anything after a newline(\\n) is considered the task description.
-   *General Example:* 
-     - `Task Name до 25.12.2024 @user1 @user2\nTask description.`
-     - `Buy groceries до 15.07.2024 @john_doe\nRemember to buy milk and bread.`
+🔹 **/asana** - Основна команда для взаємодії з Asana.
+   *Використання:* `/asana [деталі задачі]`
+   *Пояснення:* Ця команда створює задачу в Asana з наданими деталями.
+   **Можлива інформація:** Назва задачі, Дата, Виконавці, Опис
+   *Формати:*
+     - **Назва задачі** - Перша частина повідомлення, виключаючи дату та виконавців, розглядається як назва задачі.
+     - **до dd.mm.yyyy** - Вкажіть дату завершення.
+     - **`@assignee_telegram_username`** - Призначте задачу комусь з групи.
+     - **Опис** - Все, що після нового рядка (\\n) вважається описом задачі.
+   *Загальний приклад:* 
+     - `Назва задачі до 25.12.2024 @user1 @user2\nОпис задачі.`
+     - `Купити продукти до 15.07.2024 @john_doe\nНе забудьте купити молоко і хліб.`
 
-🔹 **/asana complete** - Report that a task is completed.
-   *Usage:* `/asana complete`
-   *Explanation:* This command lists all your tasks due today or overdue. Select a task to report it as completed.
+🔹 **/asana complete** - Повідомте, що задачу завершено.
+   *Використання:* `/asana complete`
+   *Пояснення:* Ця команда показує всі ваші задачі, що мають бути виконані сьогодні або прострочені. Виберіть задачу, щоб повідомити про її завершення.
 
-🔹 **/asana duetoday** - List tasks due today.
-   *Usage:* `/asana duetoday`
-   *Explanation:* This command lists all your tasks that are due today.
+🔹 **/asana duetoday** - Перелік задач, які потрібно виконати сьогодні.
+   *Використання:* `/asana duetoday`
+   *Пояснення:* Ця команда показує всі ваші задачі, які мають бути виконані сьогодні.
 
-🔹 **/asana link** - Set default workspace.
-   *Usage:* `/asana link`
-   *Explanation:* This command guides you through setting the default workspace where new tasks will be created.
+🔹 **/asana link** - Встановіть робочий простір за замовчуванням.
+   *Використання:* `/asana link`
+   *Пояснення:* Ця команда проведе вас через процес встановлення робочого простору за замовчуванням, де створюватимуться нові задачі.
 
-🔹 **/asana help** - Show this help message.
-   *Usage:* `/asana help`
-   *Explanation:* This command displays the help message with all available commands and their explanations.
+🔹 **/asana help** - Показати це повідомлення.
+   *Використання:* `/asana help`
+   *Пояснення:* Ця команда показує повідомлення з допомогою з усіма доступними командами та їх поясненнями.
 
-🔹 **/asana stickers** - Toggle stickers on and off.
-   *Usage:* `/asana stickers`
-   *Explanation:* This command toggles the use of stickers by bot.
+🔹 **/asana stickers** - Увімкнути або вимкнути стікери.
+   *Використання:* `/asana stickers`
+   *Пояснення:* Ця команда вмикає або вимикає використання стікерів ботом.
 
-📝 **Private Message Specific Commands:**
+📝 **Команди тільки для приватних повідомлень:**
 
-🔹 **stop** - Revoke Asana token and stop integration.
-   *Usage:* `stop`
-   *Explanation:* This command revokes your Asana token and stops the integration with Asana.
+🔹 **stop** - Скасувати авторизацію в Asana та зупинити інтеграцію.
+   *Використання:* `stop`
+   *Пояснення:* Ця команда відкликає ваш токен Asana і зупиняє інтеграцію з Asana.
 
-🔹 **delete** - Delete your account from the bot.
-   *Usage:* `delete`
-   *Explanation:* This command deletes your account information from the bot's database.
+🔹 **delete** - Видалити ваш обліковий запис з бази даних бота.
+   *Використання:* `delete`
+   *Пояснення:* Ця команда видаляє інформацію про ваш обліковий запис з бази даних бота.
 
-📌 **Note:** In group chats, you must use the /asana prefix before commands to ensure the bot recognizes them. In private messages, you can use the commands directly without the /asana prefix. All commands from the group section work in private messages without the /asana prefix.
+📌 **Примітка:** У групових чатах ви повинні використовувати префікс /asana перед командами, щоб бот їх розпізнав. У приватних повідомленнях ви можете використовувати команди без префіксу /asana. Усі команди з групового розділу працюють у приватних повідомленнях без префіксу /asana.
 """
 
 
 async def process_help_command(message: Message):
-    await message.answer(commands_list, parse_mode="Markdown")
+    await message.answer(commands_list_ukrainian, parse_mode="Markdown")
