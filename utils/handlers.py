@@ -16,6 +16,7 @@ from utils.parse_message import parse_message_complete
 from utils.refresh_token_wrap import refresh_token
 from utils.settings_decorator import check_settings
 from utils.states.authorization import Authorization
+from utils.states.comment_task import CommentTask
 from utils.states.default_settings import DefaultSettings
 from utils.states.default_settings_private import DefaultSettingsPrivate
 from utils.states.report_task import ReportTask
@@ -341,7 +342,7 @@ async def process_duetoday_command(message: Message, user_id: int, project_id: s
 async def process_complete_command(message: Message, state: FSMContext, user_id: int, project_id: str):
     user_tasks_dict = get_all_tasks_for_user_in_workspace(user_id, project_id)
     if not user_tasks_dict:
-        await message.answer("На сьогодні задач немає.")
+        await message.answer("Задач немає.")
         return
 
     task_buttons = [[KeyboardButton(text=task['name'])] for task in user_tasks_dict.values()]
@@ -356,6 +357,30 @@ async def process_complete_command(message: Message, state: FSMContext, user_id:
         await message.answer("Оберіть задачу, яку бажаєте здати:", reply_markup=keyboard)
         await state.set_state(ReportTask.TaskName)
         await state.update_data(user_tasks_dict=user_tasks_dict)
+    else:
+        await message.answer("Наразі немає доступних задач.")
+
+
+async def process_comment_command(message: Message, state: FSMContext, user_id, project_id):
+    comment = message.text.split(maxsplit=2)[2]
+    user_tasks_dict = get_all_tasks_for_user_in_workspace(user_id, project_id)
+
+    if not user_tasks_dict:
+        await message.answer("Задач немає.")
+        return
+
+    task_buttons = [[KeyboardButton(text=task['name'])] for task in user_tasks_dict.values()]
+    task_buttons.append([KeyboardButton(text="Скасувати")])
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=task_buttons,
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+
+    if task_buttons:
+        await message.answer("Оберіть задачу, на яку бажаєте додати коментар:", reply_markup=keyboard)
+        await state.set_state(CommentTask.Comment)
+        await state.update_data(user_tasks_dict=user_tasks_dict, comment=comment)
     else:
         await message.answer("Наразі немає доступних задач.")
 
@@ -388,6 +413,9 @@ async def asana_command(message: Message, state: FSMContext):
 
         if command == "link":
             await process_link_command(message, state)
+
+        if command == "comment":
+            await process_comment_command(message, state, message.from_user.id, settings.project_id)
 
         return
 
@@ -549,6 +577,62 @@ async def handle_task_report(message: Message, state: FSMContext):
         await message.answer(f"Помилка: {e}", reply_markup=ReplyKeyboardRemove())
 
 
+@router.message(StateFilter(CommentTask.Comment))
+async def handle_task_comment(message: Message, state: FSMContext):
+    selected_task_name = message.text
+    data = await state.get_data()
+
+    if selected_task_name == "Скасувати":
+        await state.clear()
+        await message.answer("Дія скасована.", reply_markup=ReplyKeyboardRemove())
+        return
+
+    user_tasks_dict = data['user_tasks_dict']
+    comment = data['comment']
+
+    # Перевіряємо, чи вибрана задача є в списку задач
+    task_found = False
+    chosen_task_gid = 0
+    for task_gid, task_info in user_tasks_dict.items():
+        if task_info['name'] == selected_task_name:
+            task_found = True
+            chosen_task_gid = task_gid
+            break
+
+    if not task_found:
+        await message.answer("Задача не знайдена. Будь ласка, виберіть задачу зі списку.")
+        return
+
+    asana_client = get_asana_client(message.from_user.id)
+    tasks_api_instance = asana.TasksApi(asana_client)
+
+    # Get the existing task details
+    task = tasks_api_instance.get_task(chosen_task_gid, {"opt_fields": "notes"})
+    existing_notes = task['notes'] if 'notes' in task else ""
+
+    # Append the new report to the existing notes
+    new_notes = f"{existing_notes}\n\n\n\n@{message.from_user.username} додав коментар {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}:\n{comment}"
+
+    body = {
+        "data": {
+            "notes": new_notes,
+            "completed": True
+        }
+    }
+
+    try:
+        tasks_api_instance.update_task(body, chosen_task_gid, {})
+        await message.answer("Звіт здано", reply_markup=ReplyKeyboardRemove())
+        settings = get_default_settings(message.chat.id)
+        if settings.toggle_stickers:
+            await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
+        await state.clear()
+    except Exception as e:
+        await message.answer(f"Помилка: {e}", reply_markup=ReplyKeyboardRemove())
+
+
+
+
 async def daily_notification():
     chats_to_notify = get_default_settings_for_notification()
     today = datetime.date.today()
@@ -656,6 +740,9 @@ async def private_message(message: Message, state: FSMContext):
 
         if command == "link":
             await process_link_command(message, state)
+
+        if command == "comment":
+            await process_comment_command(message, state, message.from_user.id, settings.project_id)
 
         return
 
