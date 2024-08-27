@@ -47,7 +47,7 @@ def parse_message(text):
 
 
 def parse_command(text):
-    command_pattern = r"^(complete|duetoday|link|stickers|help)"
+    command_pattern = r"^(complete|duetoday|link|stickers|comment|help)"
     command_match = re.match(command_pattern, text.strip())
     return command_match.group(1) if command_match else None
 

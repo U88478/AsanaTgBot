@@ -717,7 +717,7 @@ async def dk_command(message: Message):
 @refresh_token
 async def private_message(message: Message, state: FSMContext):
     text = message.text
-    print(f"Received message: {text}")  # Debugging print
+    print(f"Received private message: {text}")  # Debugging print
 
     settings = get_default_settings(message.chat.id)
     parsed_data = parse_message_complete(text)
