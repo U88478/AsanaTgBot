@@ -361,8 +361,7 @@ async def process_complete_command(message: Message, state: FSMContext, user_id:
         await message.answer("Наразі немає доступних задач.")
 
 
-async def process_comment_command(message: Message, state: FSMContext, user_id, project_id):
-    comment = message.text.split(maxsplit=2)[2]
+async def process_comment_command(message: Message, state: FSMContext, user_id, project_id, comment):
     user_tasks_dict = get_all_tasks_for_user_in_workspace(user_id, project_id)
 
     if not user_tasks_dict:
@@ -415,7 +414,8 @@ async def asana_command(message: Message, state: FSMContext):
             await process_link_command(message, state)
 
         if command == "comment":
-            await process_comment_command(message, state, message.from_user.id, settings.project_id)
+            comment = message.text.split(maxsplit=2)[2]
+            await process_comment_command(message, state, message.from_user.id, settings.project_id, comment)
 
         return
 
@@ -742,7 +742,8 @@ async def private_message(message: Message, state: FSMContext):
             await process_link_command(message, state)
 
         if command == "comment":
-            await process_comment_command(message, state, message.from_user.id, settings.project_id)
+            comment = message.text.split(maxsplit=1)[1]
+            await process_comment_command(message, state, message.from_user.id, settings.project_id, comment)
 
         return
 
