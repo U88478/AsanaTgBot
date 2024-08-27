@@ -615,8 +615,7 @@ async def handle_task_comment(message: Message, state: FSMContext):
 
     body = {
         "data": {
-            "notes": new_notes,
-            "completed": True
+            "notes": new_notes
         }
     }
 
