@@ -621,7 +621,7 @@ async def handle_task_comment(message: Message, state: FSMContext):
 
     try:
         tasks_api_instance.update_task(body, chosen_task_gid, {})
-        await message.answer("Звіт здано", reply_markup=ReplyKeyboardRemove())
+        await message.answer("Коментар додано", reply_markup=ReplyKeyboardRemove())
         settings = get_default_settings(message.chat.id)
         if settings.toggle_stickers:
             await message.answer_sticker('CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA')
