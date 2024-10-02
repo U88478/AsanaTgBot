@@ -471,7 +471,6 @@ async def asana_command(message: Message, state: FSMContext):
     try:
         tasks_api_instance = asana.TasksApi(asana_client)
         response = tasks_api_instance.create_task(body, opts)
-        await bot.send_message(6130114032, str(response))
         task_permalink = response.get('permalink_url', 'No permalink available')
         await message.answer(f"Задача створена: [Task Link]({task_permalink})", parse_mode='Markdown')
     except Exception as e:
