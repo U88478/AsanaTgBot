@@ -443,6 +443,8 @@ async def asana_command(message: Message, state: FSMContext):
     assignee_asana_id = get_asana_id_by_username(assignees[0]) if assignees else get_asana_id_by_tg_id(
         message.from_user.id)
 
+    print(settings.workspace_id, settings.workspace_name, '\n\n', settings.project_id, settings.project_name)
+
     body = {
         "data": {
             "name": task_name,
