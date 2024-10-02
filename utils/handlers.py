@@ -14,7 +14,6 @@ from utils.config import *
 from utils.help_command import process_help_command
 from utils.parse_message import parse_message_complete
 from utils.refresh_token_wrap import refresh_token
-from utils.settings_decorator import check_settings
 from utils.states.authorization import Authorization
 from utils.states.comment_task import CommentTask
 from utils.states.default_settings import DefaultSettings
@@ -386,11 +385,9 @@ async def process_comment_command(message: Message, state: FSMContext, user_id, 
 
 @router.message(Command("asana"))
 @refresh_token
-@check_settings
 async def asana_command(message: Message, state: FSMContext):
     text = message.text
     print(f"Received message: {text}")  # Debugging print
-    settings = get_default_settings(message.chat.id)
 
     parsed_data = parse_message_complete(text)
     command = parsed_data.get("command")
@@ -398,22 +395,32 @@ async def asana_command(message: Message, state: FSMContext):
     if command:
         print(f"Command detected: {command}")  # Debugging print
 
+        # Special handling for 'link' command since it sets up user settings
+        if command == "link":
+            await process_link_command(message, state)
+            return  # Skip further processing once link is handled
+
+        # Check settings only for non-link commands
+        settings = get_default_settings(message.chat.id)
+
+        if not settings and command != "link":
+            return await message.reply(
+                "Будь ласка, спочатку оберіть налаштування за допомогою команди /link в цьому чаті.")  # Exit command if settings are not found and it's not the 'link' command
+
+        # Now process other commands, assuming settings are valid
         if command == "complete":
             await process_complete_command(message, state, message.from_user.id, settings.project_id)
 
-        if command == "duetoday":
+        elif command == "duetoday":
             await process_duetoday_command(message, message.from_user.id, settings.project_id)
 
-        if command == "help":
+        elif command == "help":
             await process_help_command(message)
 
-        if command == "stickers":
+        elif command == "stickers":
             await process_stickers_command(message)
 
-        if command == "link":
-            await process_link_command(message, state)
-
-        if command == "comment":
+        elif command == "comment":
             comment = message.text.split(maxsplit=2)[2]
             await process_comment_command(message, state, message.from_user.id, settings.project_id, comment)
 
@@ -628,8 +635,6 @@ async def handle_task_comment(message: Message, state: FSMContext):
         await state.clear()
     except Exception as e:
         await message.answer(f"Помилка: {e}", reply_markup=ReplyKeyboardRemove())
-
-
 
 
 async def daily_notification():
