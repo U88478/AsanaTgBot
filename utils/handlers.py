@@ -771,37 +771,21 @@ async def private_message(message: Message, state: FSMContext):
         await message.answer("Спочатку ви маєте зареєструватися.")
         return
 
-    settings = get_default_settings(message.chat.id)
-    if not settings:
-        await message.answer("Будь ласка, спочатку налаштуйте інтеграцію з Asana.")
-        return
-
     due_date = date
 
+    # Use the first assignee or assign the task to the user themselves if no assignee is provided
     assignee_asana_id = get_asana_id_by_username(assignees[0]) if assignees else get_asana_id_by_tg_id(
         message.from_user.id)
 
-    project_id = settings.project_id
-    section_id = settings.section_id
-
-    # Retrieve user's task list using the workspace ID
-    user_task_list = get_user_task_list(user_gid=message.from_user.id,
-                                        access_token=asana_client.configuration.access_token,
-                                        workspace_id=settings.workspace_id)
-
-    # Task creation body
+    # Task creation body for personal tasks
     body = {
         "data": {
             "name": task_name,
             "notes": description,
-            "workspace": settings.workspace_id,
             "assignee": assignee_asana_id,
-            "parent": user_task_list["gid"],  # Create the task under the user's task list (personal space)
+            "workspace": settings.workspace_id,
         }
     }
-
-    if section_id:
-        body["data"]["memberships"] = [{"project": project_id, "section": section_id}]
 
     if due_date:
         body["data"]["due_on"] = due_date.isoformat()
