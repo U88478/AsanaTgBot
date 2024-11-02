@@ -1,4 +1,5 @@
 import base64
+import logging
 import os
 
 from cryptography.hazmat.backends import default_backend
@@ -48,7 +49,7 @@ def decrypt_token(key, encrypted_token):
         decrypted = aesgcm.decrypt(nonce, encrypted, None)
         return decrypted.decode('utf-8')
     except Exception as e:
-        print(e)
+        logging.debug(e)
         return None  # Неправильне декодування
 
 

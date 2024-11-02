@@ -179,14 +179,14 @@ async def revoke_asana_token(message: Message):
     response = requests.post(url, data=payload)
 
     if response.status_code == 200:
-        print("Token successfully revoked.")
+        logging.debug("Token successfully revoked.")
         create_user(message.from_user.id, message.from_user.first_name, message.from_user.username, None, None,
                     user.asana_id)
         await message.answer("Ваш токен успішно видалено.")
         if settings.toggle_stickers:
             await message.answer_sticker("CAACAgIAAxkBAAELD7ZljiPT4kdgBgABT8XJDtHCqm9YynEAAtoIAAJcAmUD7sMu8F-uEy80BA")
     else:
-        print("Failed to revoke token:", response.text)
+        logging.debug("Failed to revoke token:", response.text)
 
 
 @router.message(Command("delete"), F.chat.type == 'private')
@@ -383,13 +383,13 @@ async def process_comment_command(message: Message, state: FSMContext, user_id, 
 @refresh_token
 async def asana_command(message: Message, state: FSMContext):
     text = message.text
-    print(f"Received message: {text}")  # Debugging print
+    logging.debug(f"Received message: {text}")  # Debugging logging.debug
 
     parsed_data = parse_message_complete(text)
     command = parsed_data.get("command")
 
     if command:
-        print(f"Command detected: {command}")  # Debugging print
+        logging.debug(f"Command detected: {command}")  # Debugging logging.debug
 
         # Special handling for 'link' command since it sets up user settings
         if command == "link":
@@ -439,7 +439,7 @@ async def asana_command(message: Message, state: FSMContext):
     assignee_asana_id = get_asana_id_by_username(assignees[0]) if assignees else get_asana_id_by_tg_id(
         message.from_user.id)
 
-    print(settings.workspace_id, settings.workspace_name, '\n\n', settings.project_id, settings.project_name)
+    logging.debug(settings.workspace_id, settings.workspace_name, '\n\n', settings.project_id, settings.project_name)
 
     project_id = settings.project_id
     section_id = settings.section_id
@@ -723,14 +723,14 @@ def get_user_task_list(user_gid, access_token, workspace_id):
 @refresh_token
 async def private_message(message: Message, state: FSMContext):
     text = message.text
-    print(f"Received private message: {text}")  # Debugging print
+    logging.debug(f"Received private message: {text}")
 
     settings = get_default_settings(message.chat.id)
     parsed_data = parse_message_complete(text)
     command = parsed_data.get("command")
 
     if command:
-        print(f"Command detected: {command}")  # Debugging print
+        logging.debug(f"Command detected: {command}")
 
         if command == "complete":
             await process_complete_command(message, state, message.from_user.id, settings.project_id)

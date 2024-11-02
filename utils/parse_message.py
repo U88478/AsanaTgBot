@@ -43,7 +43,7 @@ def parse_message(text):
             "assignees": assignees
         }
     except Exception as e:
-        print(f"Error during parsing: {e}")
+        logging.debug(f"Error during parsing: {e}")
         return None
 
 
