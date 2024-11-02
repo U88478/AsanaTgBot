@@ -1,4 +1,5 @@
 import datetime
+import logging
 import re
 
 
@@ -53,12 +54,15 @@ def parse_command(text):
 
 
 def parse_message_complete(text: str):
-    text = text.replace("/", "", 1).replace("asana ", "").strip()
-    command = parse_command(text)
-    if command:
-        text = text.replace(command, "", 1).strip()
-    data = parse_message(text)
-    if not data["task_name"]:
-        data["task_name"] = "Untitled Task"
-    data["command"] = command
-    return data
+    try:
+        text = text.replace("/", "", 1).replace("asana ", "").strip()
+        command = parse_command(text)
+        if command:
+            text = text.replace(command, "", 1).strip()
+        data = parse_message(text)
+        if not data["task_name"]:
+            data["task_name"] = "Untitled Task"
+        data["command"] = command
+        return data
+    except AttributeError:
+        logging.debug('Not a text')
