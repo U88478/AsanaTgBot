@@ -3,7 +3,7 @@ import logging
 
 from aiogram import Router
 from aiogram.enums.chat_type import ChatType
-from aiogram.filters import Command, CommandStart, StateFilter, ChatTypeFilter
+from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, \
     InlineKeyboardMarkup
@@ -24,7 +24,11 @@ from utils.token_encryption import *
 router = Router()
 
 
-@router.message(CommandStart(), ChatTypeFilter(chat_type=ChatType.PRIVATE))
+def is_private(message: Message):
+    return message.chat.type == ChatType.PRIVATE
+
+
+@router.message(CommandStart(), is_private)
 async def start(message: Message, state: FSMContext) -> None:
     user = get_user(message.from_user.id)
     if user is not None and user.asana_token is not None:
@@ -71,7 +75,7 @@ async def process_token(message: Message, state: FSMContext) -> None:
         token, refresh_token = decrypt_tokens(key, message.text)
         try:
             asana_id = get_asana_id(token)
-        except Exception as e:
+        except Exception:
             await message.reply("Невірний токен. Будь ласка, спробуйте ще раз.")
             return
 
@@ -158,7 +162,7 @@ async def select_workspace_private(message: Message, state: FSMContext):
     await state.clear()
 
 
-@router.message(Command("stop"), ChatTypeFilter(chat_type=ChatType.PRIVATE))
+@router.message(Command("stop"), is_private)
 async def revoke_asana_token(message: Message):
     user = get_user(message.from_user.id)
     settings = get_default_settings(message.chat.id)
@@ -187,7 +191,7 @@ async def revoke_asana_token(message: Message):
         print("Failed to revoke token:", response.text)
 
 
-@router.message(Command("delete"), ChatTypeFilter(chat_type=ChatType.PRIVATE))
+@router.message(Command("delete"), is_private)
 async def delete_command(message: Message):
     user = get_user(message.from_user.id)
     delete_result = False
@@ -717,7 +721,7 @@ def get_user_task_list(user_gid, access_token, workspace_id):
 
 
 # * should be at the very end
-@router.message(ChatTypeFilter(chat_type=ChatType.PRIVATE))
+@router.message(is_private)
 @refresh_token
 async def private_message(message: Message, state: FSMContext):
     text = message.text
