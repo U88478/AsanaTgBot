@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.enums.chat_type import ChatType
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
@@ -24,11 +24,9 @@ from utils.token_encryption import *
 router = Router()
 
 
-def is_private(message: Message):
-    return message.chat.type == ChatType.PRIVATE
 
 
-@router.message(CommandStart(), is_private)
+@router.message(CommandStart(), F.chat.type == 'private')
 async def start(message: Message, state: FSMContext) -> None:
     user = get_user(message.from_user.id)
     if user is not None and user.asana_token is not None:
@@ -162,7 +160,7 @@ async def select_workspace_private(message: Message, state: FSMContext):
     await state.clear()
 
 
-@router.message(Command("stop"), is_private)
+@router.message(Command("stop"), F.chat.type == 'private')
 async def revoke_asana_token(message: Message):
     user = get_user(message.from_user.id)
     settings = get_default_settings(message.chat.id)
@@ -191,7 +189,7 @@ async def revoke_asana_token(message: Message):
         print("Failed to revoke token:", response.text)
 
 
-@router.message(Command("delete"), is_private)
+@router.message(Command("delete"), F.chat.type == 'private')
 async def delete_command(message: Message):
     user = get_user(message.from_user.id)
     delete_result = False
@@ -721,7 +719,7 @@ def get_user_task_list(user_gid, access_token, workspace_id):
 
 
 # * should be at the very end
-@router.message(is_private)
+@router.message(F.chat.type == 'private', F.text)
 @refresh_token
 async def private_message(message: Message, state: FSMContext):
     text = message.text
