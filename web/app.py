@@ -13,7 +13,7 @@ from utils.token_encryption import encrypt_tokens
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-app = Flask('AsanaBotQ')
+app = Flask(__name__)
 
 
 @app.route('/asana_redirect')
