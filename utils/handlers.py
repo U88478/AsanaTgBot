@@ -25,8 +25,6 @@ router = Router()
 
 
 def is_private(message: Message):
-    if message.chat.type != ChatType.PRIVATE:
-        message.answer("Ця команда доступна лише в приватних повідомленнях")
     return message.chat.type == ChatType.PRIVATE
 
 
