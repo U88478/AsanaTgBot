@@ -3,7 +3,7 @@ import logging
 
 from aiogram import Router
 from aiogram.enums.chat_type import ChatType
-from aiogram.filters import Command, CommandStart, StateFilter
+from aiogram.filters import Command, CommandStart, StateFilter, ChatTypeFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, \
     InlineKeyboardMarkup
@@ -24,11 +24,7 @@ from utils.token_encryption import *
 router = Router()
 
 
-def is_private(message: Message):
-    return message.chat.type == ChatType.PRIVATE
-
-
-@router.message(CommandStart(), is_private)
+@router.message(CommandStart(), ChatTypeFilter(chat_type=ChatType.PRIVATE))
 async def start(message: Message, state: FSMContext) -> None:
     user = get_user(message.from_user.id)
     if user is not None and user.asana_token is not None:
@@ -162,7 +158,7 @@ async def select_workspace_private(message: Message, state: FSMContext):
     await state.clear()
 
 
-@router.message(Command("stop"), is_private)
+@router.message(Command("stop"), ChatTypeFilter(chat_type=ChatType.PRIVATE))
 async def revoke_asana_token(message: Message):
     user = get_user(message.from_user.id)
     settings = get_default_settings(message.chat.id)
@@ -191,7 +187,7 @@ async def revoke_asana_token(message: Message):
         print("Failed to revoke token:", response.text)
 
 
-@router.message(Command("delete"), is_private)
+@router.message(Command("delete"), ChatTypeFilter(chat_type=ChatType.PRIVATE))
 async def delete_command(message: Message):
     user = get_user(message.from_user.id)
     delete_result = False
@@ -721,7 +717,7 @@ def get_user_task_list(user_gid, access_token, workspace_id):
 
 
 # * should be at the very end
-@router.message(is_private)
+@router.message(ChatTypeFilter(chat_type=ChatType.PRIVATE))
 @refresh_token
 async def private_message(message: Message, state: FSMContext):
     text = message.text
@@ -797,3 +793,8 @@ async def private_message(message: Message, state: FSMContext):
         await message.answer(f"Задача створена: [Task Link]({task_permalink})", parse_mode='Markdown')
     except Exception as e:
         await message.answer(f"Помилка при створенні задачі: {e}")
+
+
+@router.message()
+def unprocessed_message_processor(message: Message):
+    logging.debug(f'Unprocessed message: {message}')

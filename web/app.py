@@ -6,12 +6,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.config import *
 from utils.token_encryption import encrypt_tokens
 
-app = Flask(__name__)
+app = Flask('AsanaBotQ')
 
 
-@app.route('/')
-def redirect_handler():
+@app.route('/asana_redirect')
+def asana_redirect_handler():
     code = request.args.get('code')
+    print(request.json)
     if code:
         response = requests.post(
             'https://app.asana.com/-/oauth_token',
