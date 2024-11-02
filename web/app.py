@@ -1,3 +1,5 @@
+import logging
+
 import requests
 from flask import Flask, request, render_template
 import sys
@@ -12,7 +14,7 @@ app = Flask('AsanaBotQ')
 @app.route('/asana_redirect')
 def asana_redirect_handler():
     code = request.args.get('code')
-    print(request.json)
+    logging.debug(request.json)
     if code:
         response = requests.post(
             'https://app.asana.com/-/oauth_token',
