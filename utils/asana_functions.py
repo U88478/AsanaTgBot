@@ -39,7 +39,8 @@ def get_asana_client(user_id, token=None):
 
     try:
         # Make a lightweight API call to verify the token
-        # asana.UsersApi(asana_client).get_user('me', opts={})
+        users_api_instance = asana.UsersApi(asana_client)
+        users_api_instance.get_user("me", opts={})
         return asana_client  # Token is valid, return the client
     except asana.rest.ApiException as e:
         if e.status == 401 and not token:  # Unauthorized, token may be expired or revoked

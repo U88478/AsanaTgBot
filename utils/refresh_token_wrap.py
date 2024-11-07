@@ -26,6 +26,12 @@ def refresh_token(func):
             create_user(message.from_user.id, message.from_user.first_name, 
                         message.from_user.username, new_access_token, 
                         new_refresh_token, user.asana_id)
-            return
+
+            # Update the asana client with the new token
+            asana_client = get_asana_client(message.from_user.id)
+            users_api_instance = asana.UsersApi(asana_client)
+
+            users_api_instance.get_user("me", opts)
+
         return await func(message, *args, **kwargs)
     return wrapper
