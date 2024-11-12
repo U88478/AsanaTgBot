@@ -68,10 +68,7 @@ def calculate_due_date(marker):
     elif re.match(r"до \d{1,2}-го", marker):
         # Match day in the current month, e.g., "до 12-го"
         day = int(marker.split()[1].replace("-го", ""))
-        if day >= today.day:
-            return today.replace(day=day)
-        else:
-            return None  # If the specified day has passed in the current month
+        return today.replace(day=day)
 
     else:
         return None
