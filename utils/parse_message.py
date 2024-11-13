@@ -13,15 +13,15 @@ def parse_date(due_date_str):
 
 
 def date_for_day_in_current_week(target_day_name):
-    # Define the day names with indices including weekends
+    # Define the day names with indices, including weekends
     week_days = {
-        'понеділка': 0,
-        'вівторка': 1,
-        'середи': 2,
-        'четверга': 3,
-        'п\'ятниці': 4,
-        'суботи': 5,
-        'неділі': 6
+        'понеділка': 0,  # Monday
+        'вівторка': 1,  # Tuesday
+        'середи': 2,  # Wednesday
+        'четверга': 3,  # Thursday
+        'п\'ятниці': 4,  # Friday
+        'суботи': 5,  # Saturday
+        'неділі': 6  # Sunday
     }
 
     # Get today's date and the current week's Monday
@@ -32,9 +32,9 @@ def date_for_day_in_current_week(target_day_name):
     target_day_index = week_days.get(target_day_name.lower())
     if target_day_index is not None:
         target_date = start_of_week + timedelta(days=target_day_index)
-        return target_date.date()  # Returning just the date part
+        return target_date.date()
     else:
-        return None  # If the day name isn't recognized
+        return None
 
 
 def calculate_due_date(marker):
@@ -54,6 +54,12 @@ def calculate_due_date(marker):
     for day_name in week_days:
         if day_name in marker:
             return date_for_day_in_current_week(day_name)
+
+    # Check for specific date format 'до DD.MM.YYYY' or 'до DD.MM.YY'
+    date_match = re.search(r"до\s+(\d{1,2}\.\d{1,2}\.\d{2,4})", marker)
+    if date_match:
+        date_str = date_match.group(1)
+        return parse_date(date_str)
 
     # Other markers like 'до кінця дня'
     if "до кінця дня" in marker:
@@ -84,7 +90,7 @@ def parse_message(text):
 
         # Check for different time markers
         date_marker_match = re.search(
-            r'через\s+\d+\s+дн(і|ів)|до\s+понеділка|до\s+вівторка|до\s+середи|до\s+четверга|до\s+п\'ятниці|до\s+суботи|до\s+неділі|до\s+кінця\s+дня|до\s+кінця\s+місяця|до\s+\d{1,2}-го',
+            r'через\s+\d+\s+дн(і|ів)|до\s+понеділка|до\s+вівторка|до\s+середи|до\s+четверга|до\s+п\'ятниці|до\s+суботи|до\s+неділі|до\s+кінця\s+дня|до\s+кінця\s+місяця|до\s+\d{1,2}-го|до\s+\d{1,2}\.\d{1,2}\.\d{2,4}',
             fr
         )
         date = None
