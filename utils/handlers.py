@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from aiogram import Router, F
 from aiogram.filters import Command, CommandStart, StateFilter
@@ -466,10 +467,18 @@ async def asana_command(message: Message, state: FSMContext):
         task_permalink = response.get('permalink_url', 'No permalink available')
         await message.answer(f"Задача створена: [Task Link]({task_permalink})", parse_mode='Markdown')
     except Exception as e:
-        await message.answer(f"Помилка при створенні задачі: {e}")
+        error_message = str(e)  # Default to the full exception message
+        if hasattr(e, 'response') and e.response is not None:
+            try:
+                error_data = e.response.json()  # Parse the JSON response
+                if "errors" in error_data and len(error_data["errors"]) > 0:
+                    error_message = error_data["errors"][0]["message"]  # Extract the specific error message
+            except json.JSONDecodeError: # If the response is not JSON, ignore and use the default message
+                logging.debug(error_message)
+                await message.answer("Помилка при створенні задачі")
 
 
-# отримує ввсі задачі, незалежно від дати або її відсутності
+# отримує всі задачі, незалежно від дати або її відсутності
 def get_all_tasks_for_user_in_workspace(user_id, project_id):
     user = get_user(user_id)
     asana_client = get_asana_client(user_id)
