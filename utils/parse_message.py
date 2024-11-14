@@ -12,69 +12,72 @@ def parse_date(due_date_str):
     return None
 
 
-def date_for_day_in_current_week(target_day_name):
-    # Define the day names with indices, including weekends
+def date_for_day_in_current_week(target_day_name, allow_past=True):
     week_days = {
-        'понеділка': 0,  # Monday
-        'вівторка': 1,  # Tuesday
-        'середи': 2,  # Wednesday
-        'четверга': 3,  # Thursday
-        'п\'ятниці': 4,  # Friday
-        'суботи': 5,  # Saturday
-        'неділі': 6  # Sunday
+        'понеділка': 0,
+        'вівторка': 1,
+        'середи': 2,
+        'четверга': 3,
+        'п\'ятниці': 4,
+        'суботи': 5,
+        'неділі': 6
     }
 
-    # Get today's date and the current week's Monday
-    today = datetime.today()
-    start_of_week = today - timedelta(days=today.weekday())
-
-    # Find the target day index and calculate the date for that day in this week
+    today = datetime.today().date()
     target_day_index = week_days.get(target_day_name.lower())
+
     if target_day_index is not None:
-        target_date = start_of_week + timedelta(days=target_day_index)
-        return target_date.date()
+        days_difference = target_day_index - today.weekday()
+        if days_difference < 0:
+            days_difference += 7 if allow_past else 0
+        elif days_difference > 0 and not allow_past:
+            days_difference -= 7
+        return today + timedelta(days=days_difference)
     else:
         return None
 
 
 def calculate_due_date(marker):
-    today = datetime.today()
+    today = datetime.today().date()
 
-    # Check for markers like 'через X днів'
+    # Handle "через X днів" cases
     if marker.startswith("через"):
-        days_str = marker.split()[1].replace("днів", "").replace("день", "").strip()
+        days_str = re.sub(r"\bд(ні|нів|ня|ей|ень)\b", "", marker.split()[1]).strip()
         try:
             days = int(days_str)
             return today + timedelta(days=days)
         except ValueError:
             return None
 
-    # Check for specific weekday markers
+    # Handle specific weekday markers
     week_days = ['понеділка', 'вівторка', 'середи', 'четверга', 'п\'ятниці', 'суботи', 'неділі']
     for day_name in week_days:
         if day_name in marker:
-            return date_for_day_in_current_week(day_name)
+            return date_for_day_in_current_week(day_name, allow_past=True)
 
-    # Check for specific date format 'до DD.MM.YYYY' or 'до DD.MM.YY'
+    # Handle specific date formats
     date_match = re.search(r"до\s+(\d{1,2}\.\d{1,2}\.\d{2,4})", marker)
     if date_match:
         date_str = date_match.group(1)
         return parse_date(date_str)
 
-    # Other markers like 'до кінця дня'
+    # Handle "до кінця дня"
     if "до кінця дня" in marker:
-        return datetime.combine(today, datetime.max.time())
+        return today
 
+    # Handle "до кінця місяця"
     elif "до кінця місяця" in marker:
-        # Get the last day of the current month
         next_month = today.replace(day=28) + timedelta(days=4)
         last_day_of_month = next_month - timedelta(days=next_month.day)
-        return datetime.combine(last_day_of_month, datetime.max.time())
+        return last_day_of_month
 
+    # Handle specific day of the month
     elif re.match(r"до \d{1,2}-го", marker):
-        # Match day in the current month, e.g., "до 12-го"
         day = int(marker.split()[1].replace("-го", ""))
-        return today.replace(day=day)
+        try:
+            return today.replace(day=day)
+        except ValueError:
+            return None  # In case the day is invalid for the month
 
     else:
         return None
@@ -82,7 +85,7 @@ def calculate_due_date(marker):
 
 def parse_message(text):
     try:
-        # Split the message into the first line and description
+        # Split the message into the first row and description
         if "\n" in text:
             fr, desc = text.split("\n", maxsplit=1)
         else:
@@ -90,28 +93,36 @@ def parse_message(text):
 
         # Check for different time markers
         date_marker_match = re.search(
-            r'через\s+\d+\s+дн(і|ів)|до\s+понеділка|до\s+вівторка|до\s+середи|до\s+четверга|до\s+п\'ятниці|до\s+суботи|до\s+неділі|до\s+кінця\s+дня|до\s+кінця\s+місяця|до\s+\d{1,2}-го|до\s+\d{1,2}\.\d{1,2}\.\d{2,4}',
-            fr
+            r'через\s+[-+]?\d+\s*\bд(ні|нів|ня|ей|ень)\b|'  # "через X днів"
+            r'до\s+понеділка|до\s+вівторка|до\s+середи|до\s+четверга|до\s+п\'ятниці|до\s+суботи|до\s+неділі|'  # Weekday markers
+            r'до\s+кінця\s+дня|до\s+кінця\s+місяця|'  # End of day/month
+            r'до\s+\d{1,2}-го|'  # Day of month (e.g., до 25-го)
+            r'до\s+\d{1,2}\.\d{1,2}\.\d{2,4}',  # Date format (e.g., до 25.12.2024)
+            fr.lower()
         )
+
         date = None
         if date_marker_match:
             date_marker = date_marker_match.group(0)
+            # Calculate date only if marker is valid and recognized
             date = calculate_due_date(date_marker)
             if date:
-                fr = re.sub(re.escape(date_marker), '', fr).strip()  # Remove the marker from the task name
+                # Remove marker from the task name
+                fr = re.sub(re.escape(date_marker), '', fr, flags=re.IGNORECASE).strip()
 
         # Extract assignees
         assignees = re.findall(r'@(\w+)', fr)
 
         # Remove all occurrences of @assignee to get the task name
-        fr_cleaned = re.sub(r'@\w+', '', fr)
-        task_name = fr_cleaned.strip()
+        fr_cleaned = re.sub(r'@\w+', '', fr).strip()
+        task_name = fr_cleaned or "Untitled Task"
 
         return {
             "task_name": task_name,
             "description": desc.strip(),
             "date": date,
-            "assignees": assignees
+            "assignees": assignees,
+            "command": None
         }
     except Exception as e:
         logging.debug(f"Error during parsing: {e}")
